@@ -1,0 +1,87 @@
+# =============================================================================
+# PPFOT-IDS Configuration
+# Byzantine-Robust Federated Intrusion Detection via Rényi-Private OT
+# =============================================================================
+
+# --- Data ---
+data:
+  dataset: "ICS3D"
+  kaggle_slug: "rogernickanaedevha/integrated-cloud-security-3datasets-ics3d"
+  histogram_bins: 100                # B in manuscript
+  winsorize_quantiles: [0.01, 0.99]
+  test_size: 0.2
+  random_state: 42
+
+# --- Model Architecture ---
+model:
+  feature_extractor:
+    hidden_dims: [256, 128, 64]      # Input → 256 → 128 → 64
+    dropout: 0.2
+    batch_norm: true
+    spectral_norm: true
+  classifier:
+    hidden_dims: [128, 64]           # 128 → 64 → num_classes
+    dropout: 0.2
+
+# --- Optimal Transport ---
+optimal_transport:
+  regularization: "entropic"
+  epsilon_init: 0.5                  # ε₀ for Sinkhorn scheduling
+  epsilon_min: 0.01                  # ε_min
+  decay_rate: 0.9                    # ρ
+  sinkhorn_tolerance: 1.0e-6         # τ
+  sinkhorn_max_iter: 1000
+
+# --- Differential Privacy ---
+privacy:
+  epsilon: 0.85                      # Global ε (RDP-optimized)
+  delta: 5.0e-4                      # Global δ
+  delta_per_round: 1.0e-5            # Per-round δ₀
+  sensitivity: "auto"                # Δ = √2/n (computed from data)
+  mechanism: "gaussian"
+  rdp_alpha_search: [2, 5, 10, 15, 20, 50, 100]
+
+# --- Byzantine Robustness ---
+byzantine:
+  tolerance_q: 0.4                   # Maximum fraction of adversaries
+  threshold_multiplier: 2.0          # α for outlier detection
+  aggregation: "wasserstein_median"  # Geometric median in W₂ space
+  trimmed_mean: true
+
+# --- Federated Learning ---
+federated:
+  num_clients: 5                     # K
+  communication_rounds: 100          # T (full); 50 for privacy accounting
+  local_epochs: 5
+  participation_rate: 1.0
+
+# --- Training ---
+training:
+  learning_rate: 1.0e-3
+  lr_scheduler: "cosine_annealing"
+  batch_size: 64
+  max_grad_norm: 1.0                 # Gradient clipping
+  lambda_ot: 0.1                     # OT loss weight
+  lambda_privacy: 0.01               # Privacy regularisation weight
+
+# --- Evaluation ---
+evaluation:
+  num_seeds: 5                       # Statistical repetitions
+  significance_level: 0.05           # Paired t-test
+  bonferroni: true
+  adversarial_epsilons: [0.01, 0.05, 0.1, 0.2]
+  dirichlet_alphas: [0.1, 0.5, 1.0, 10.0]
+  client_counts: [3, 5, 10, 20]
+
+# --- Hardware ---
+hardware:
+  device: "auto"                     # auto, cuda, cpu
+  num_workers: 4
+  pin_memory: true
+
+# --- Output ---
+output:
+  save_dir: "results"
+  save_models: true
+  save_plots: true
+  log_interval: 10
