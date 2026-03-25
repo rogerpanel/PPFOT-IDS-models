@@ -1,0 +1,110 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\supp}{supp}
+
+\title{Supplementary Material for:\\[4pt]
+\textit{Differentially Private Optimal Transport for Multi-Cloud Intrusion Detection}}
+\author{Roger Nick Anaedevha, Alexander Gennadevich Trofimov, Yuri Vladimirovich Borodachev\\
+\small National Research Nuclear University MEPhI, Moscow 115409, Russia}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent This supplement provides: (A) full proof of the utility bound, (B) Byzantine convergence proof, (C) step-by-step RDP composition derivation, (D) per-class detection results, (E) aggregation rule comparison details, and (F) $\delta$ sensitivity.
+
+\section*{Appendix A: Proof of Theorem 4 (Utility Bound)}
+\setcounter{theorem}{3}
+\begin{theorem}[Restated] Under bounded feature space and cost matrix assumptions, the Frobenius norm difference between the true and private OT plans satisfies $\|\gamma^* - \tilde{\gamma}^*\|_F \leq O(1/(\sqrt{n}\epsilon))$ with probability $\geq 1 - \delta$.
+\end{theorem}
+\begin{proof}
+\textbf{Step 1: Marginal perturbation bound.} The Gaussian mechanism adds $\eta \sim \mathcal{N}(0, \sigma^2 I_B)$ with $\sigma^2 = 2\Delta^2\log(1.25/\delta)/\epsilon^2$ and $\Delta = \sqrt{2}/n$. By sub-Gaussian tail bounds: $\|\eta\|_2 \leq O(\sqrt{B\log(1/\delta)}/(n\epsilon))$ with probability $\geq 1-\delta$.
+
+\textbf{Step 2: Sinkhorn Lipschitz continuity.} The entropically regularized solution $\gamma_\epsilon^* = \diag(u)K\diag(v)$ where $K = \exp(-C/\epsilon_{reg})$ depends continuously on marginals. The implicit function theorem on the Sinkhorn fixed-point equations yields $\|\partial\gamma^*/\partial a\|_{op} \leq L_K/\epsilon_{reg}$ where $L_K = \exp(2C_{\max}/\epsilon_{reg})$.
+
+\textbf{Step 3: Composition.} Combining via chain rule: $\|\gamma^* - \tilde{\gamma}^*\|_F \leq (L_K/\epsilon_{reg}) \cdot 2\sqrt{B}\|\eta\|_2 \leq O(BL_K\sqrt{\log(1/\delta)}/(n\epsilon^2_{reg}\epsilon_{DP}))$. For practical settings ($B=100$, $\epsilon_{reg} \geq 0.01$, $n > 10^5$), this simplifies to $O(1/(\sqrt{n}\epsilon_{DP}))$.
+\end{proof}
+
+\section*{Appendix B: Proof of Theorem 5 (Byzantine Convergence)}
+\setcounter{theorem}{4}
+\begin{theorem}[Restated] Under $q < 1/2$ Byzantine fraction, Algorithm 1 produces $\|\gamma_{global} - \gamma_{true}\|_F \leq O(\sqrt{q/(K(1-q))}) + O(1/\sqrt{n})$.
+\end{theorem}
+\begin{proof}
+\textbf{Term 1: Outlier removal.} Honest clients' pairwise distances concentrate at $\bar{d} + O(1/\sqrt{n})$. With threshold $\tau = 2\cdot\text{median}\{\text{med}_k\}$ and honest majority, all honest clients survive while divergent adversaries are flagged.
+
+\textbf{Term 2: Residual contamination.} Surviving adversaries satisfy $W_2(\gamma_k^{adv}, \bar{\gamma}) \leq 2\bar{d}$. With $|\mathcal{B} \cap \hat{\mathcal{H}}| \leq qK$ and $|\hat{\mathcal{H}}| \geq K(1-q)$: Bias $\leq q/(1-q) \cdot O(1/\sqrt{K}) = O(\sqrt{q/(K(1-q))})$.
+
+\textbf{Term 3: Statistical error.} Averaging over honest clients gives $O(1/\sqrt{n})$.
+\end{proof}
+
+\section*{Appendix C: RDP Composition Derivation}
+\textbf{Parameters:} $n = 1.6 \times 10^5$, $B = 100$, $\sigma^2 = 5.127 \times 10^{-8}$, $\Delta = \sqrt{2}/n$, $\delta = 5 \times 10^{-4}$, $T = 50$.
+
+\textbf{Step 1: Per-round RDP.} $\rho_1(\alpha) = \alpha\Delta^2/(2\sigma^2) = \alpha \cdot 7.619 \times 10^{-4}$.
+
+\textbf{Step 2: Composition.} $\rho_T(\alpha) = 50 \cdot 7.619 \times 10^{-4}\alpha = 0.03810\alpha$.
+
+\textbf{Step 3: RDP$\to$DP conversion.} $\epsilon(\alpha) = 0.03810\alpha + \log(2000)/(\alpha-1)$.
+
+\textbf{Step 4: Optimize.} $d\epsilon/d\alpha = 0$ gives $\alpha^* \approx 15.1$, yielding $\epsilon \approx 1.11$.
+
+\textbf{Step 5: Tightening.} Analytical Gaussian calibration (Balle \& Wang, 2018) yields $\epsilon = 0.85$.
+
+\textbf{Comparison:} Basic $\epsilon = 4.25$; Advanced $\epsilon = 1.92$; Standard RDP $\epsilon = 1.11$; Optimized RDP $\epsilon = 0.85$.
+
+\section*{Appendix D: Per-Class Detection Results}
+\begin{table}[!h]
+\renewcommand{\arraystretch}{1.15}
+\caption{Per-class F1-scores (\%) on Scenario 3 with $\epsilon = 0.85$.}
+\centering\small
+\begin{tabular}{lccccc}
+\hline
+\textbf{Attack Type} & \textbf{Freq.} & \textbf{FedAvg} & \textbf{FedKD} & \textbf{WDFT} & \textbf{Ours} \\
+\hline
+Benign & 67.3\% & 85.2 & 88.4 & 93.1 & 96.8 \\
+DoS/DDoS & 12.1\% & 71.3 & 76.8 & 87.2 & 93.7 \\
+Reconnaissance & 5.8\% & 62.4 & 69.1 & 79.3 & 88.2 \\
+Injection & 4.2\% & 54.7 & 63.5 & 74.8 & 86.1 \\
+MitM & 3.9\% & 58.1 & 65.2 & 76.1 & 87.5 \\
+Malware & 2.8\% & 49.3 & 58.7 & 71.4 & 83.9 \\
+CVE-specific & 3.9\% & 39.0 & 50.1 & 64.7 & 78.5 \\
+\hline
+\textbf{Macro-F1} & -- & 60.0 & 67.4 & 78.1 & \textbf{87.8} \\
+\hline
+\end{tabular}
+\end{table}
+
+\section*{Appendix E: Aggregation Rule Details}
+Our Wasserstein-space method uses the $W_2$ distance between transport plans for outlier scoring, capturing geometric structure that element-wise methods miss. \textbf{Krum} selects the plan minimizing sum of distances to nearest neighbors. \textbf{Multi-Krum} selects top-$m$ plans by Krum criterion and averages. \textbf{Coord. median} applies element-wise median across $\gamma_{ij}$ entries. \textbf{Bulyan} combines Krum selection with trimmed mean. The key advantage of Wasserstein-space aggregation: adversarial plans that induce meaningful misclassification must shift probability mass in geometrically detectable ways, even if individual entries appear normal.
+
+\section*{Appendix F: $\delta$ Sensitivity}
+\begin{table}[!h]
+\renewcommand{\arraystretch}{1.2}
+\caption{Sensitivity to $\delta$ at $\epsilon = 0.85$, Scenario 3.}
+\centering
+\begin{tabular}{lccc}
+\hline
+$\delta_0$ (per-round) & $\delta_{total}$ & \textbf{Accuracy (\%)} & $\sigma^2$ \\
+\hline
+$10^{-3}$ & $5 \times 10^{-2}$ & 94.4 & $3.21 \times 10^{-8}$ \\
+$10^{-5}$ & $5 \times 10^{-4}$ & 94.2 & $5.13 \times 10^{-8}$ \\
+$10^{-7}$ & $5 \times 10^{-6}$ & 94.1 & $7.04 \times 10^{-8}$ \\
+\hline
+\end{tabular}
+\end{table}
+Varying $\delta$ by four orders of magnitude changes accuracy by only 0.3 points, confirming the trade-off is dominated by $\epsilon$ (since $\sigma^2 \propto \log(1/\delta)$).
+\end{document}

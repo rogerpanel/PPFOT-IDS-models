@@ -1,0 +1,1054 @@
+%% Main Manuscript - Fresh Submission to IEEE Access
+%% Based on Document 5 (highlighted v3) with Round 2 reviewer additions
+%% All yellow highlights removed for fresh submission
+%% All figures, equations, tables, and analysis preserved
+
+\documentclass{ieeeaccess}
+
+%%%% PACKAGES
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+%%%% Math Shortcuts
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\G}{\mathcal{G}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Z}{\mathcal{Z}}
+\newcommand{\ScriptS}{\mathcal{S}}
+\newcommand{\ScriptT}{\mathcal{T}}
+\newcommand{\K}{\mathcal{K}}
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\Q}{\mathcal{Q}}
+\newcommand{\U}{\mathcal{U}}
+\newcommand{\V}{\mathcal{V}}
+\newcommand{\W}{\mathcal{W}}
+\newcommand{\Prob}{\mathbb{P}}
+
+%%%% Math Operators
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\prox}{prox}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\OT}{OT}
+\DeclareMathOperator{\supp}{supp}
+
+%%%% Theorem Environments
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\hyphenation{op-tical net-works semi-conduc-tor}
+\hypersetup{pdfauthor={Roger Nick Anaedevha}, pdftitle={Differentially Private Optimal Transport}}
+
+\begin{document}
+
+\history{Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.}
+\doi{10.1109/ACCESS.2025.DOI}
+
+\title{Byzantine-Robust Federated Intrusion Detection via Rényi-Private Optimal Transport}
+
+\author{Roger Nick Anaedevha\authorrefmark{1},
+Alexander Gennadevich Trofimov\authorrefmark{1},
+and Yuri Vladimirovich Borodachev\authorrefmark{2}}
+
+\address[1]{National Research Nuclear University MEPhI (Moscow Engineering Physics Institute), Moscow 115409, Russia (e-mail: ar006@campus.mephi.ru)}
+\address[2]{Artificial Intelligence Research Center, National Research Nuclear University MEPhI, Moscow 115409, Russia}
+
+\tfootnote{This work was supported by a grant for research centers in Artificial Intelligence from the Ministry of Economic Development of the Russian Federation under subsidy agreement (identifier 000000C313925P3Q0002).}
+
+\markboth{Anaedevha \headeretal: Byzantine-Robust Federated Intrusion Detection through R\'{e}nyi-Private Optimal Transport}{Anaedevha \headeretal: Byzantine-Robust Federated Intrusion Detection through R\'{e}nyi-Private Optimal Transport}
+
+\corresp{Corresponding author: Roger Nick Anaedevha (e-mail: ar006@campus.mephi.ru).}
+
+\begin{abstract}
+Multi-cloud deployments create critical domain adaptation challenges, where intrusion detection systems trained on one cloud provider must generalize to heterogeneous environments without sharing sensitive security data. Although optimal transport theory provides principled methods for distribution alignment, it has not been applied to network intrusion detection with formal privacy guarantees. This study introduces a comprehensive framework that combines differentially private optimal transport with federated multi-cloud security. We address three fundamental problems: computational intractability through entropic regularization with Sinkhorn divergence achieving $O(n^2)$ complexity versus $O(n^3)$ for exact methods; privacy preservation through $(\epsilon,\delta)$-differential privacy with calibrated Gaussian noise and formal R\'{e}nyi divergence composition accounting yielding a tight global budget of $\epsilon = 0.85$ over $T = 50$ federated rounds; and adversarial robustness through Byzantine-robust aggregation validated against established robust federated baselines including Krum, coordinate-wise median, and Bulyan, tolerating up to 40\% malicious participants. Our Privacy-Preserving Federated Optimal Transport Intrusion Detection System (PPFOT-IDS) achieves 94.2\% accuracy in cross-cloud scenarios versus 78.3\% for standard federated learning baselines, with 15--23$\times$ computational speedup through adaptive Sinkhorn scheduling. Extensive evaluation on the Integrated Cloud Security 3Datasets (ICS3D) spanning container security, IoT/IIoT environments, and enterprise security operations demonstrates robust performance under Byzantine attacks (maintaining 87.1\% accuracy with 40\% malicious nodes), strong privacy guarantees ($\epsilon = 0.85$, $\delta = 5 \times 10^{-4}$), and effective handling of distribution shifts between cloud providers. Scalability analysis across heterogeneous client participation ($K \in \{3, 5, 10, 20\}$) and non-IID traffic distributions confirms robust performance, with the framework's advantage increasing under extreme heterogeneity. The framework enables secure threat intelligence sharing across organizational boundaries while meeting real-time detection requirements with sub-100\,ms latency, providing a novel federated, differentially private optimal transport solution for multi-cloud intrusion detection.
+\end{abstract}
+
+\begin{keywords}
+Optimal transport, Differential privacy, Federated learning, Intrusion detection, Multi-cloud security, Domain adaptation, Wasserstein distance, Sinkhorn divergence, Byzantine robustness
+\end{keywords}
+
+\titlepgskip=-21pt
+
+\maketitle
+
+%% ====================================================================
+\section{Introduction}
+\label{sec:introduction}
+%% ====================================================================
+
+\IEEEPARstart{M}{ulti-cloud} architectures have become the dominant deployment model for enterprise applications, with 70\% of organizations utilizing multiple cloud service providers by 2024~\cite{flexera2024} to avoid vendor lock-in and achieve geographic redundancy. However, this architectural evolution creates unprecedented challenges for intrusion detection systems. Security models trained on network traffic from one cloud provider exhibit catastrophic performance degradation when deployed to others due to distribution shifts in logging formats, protocol implementations, and infrastructure behaviors. Microsoft's 2024 State of Multi-cloud Security Risk Report documents that the average multi-cloud deployment contains 351 exploitable attack paths, with security models achieving only 54--67\% accuracy when transferred across cloud boundaries without adaptation.
+
+\subsection{The Multi-Cloud Security Challenge}
+
+The fundamental challenge lies in domain adaptation under stringent constraints. Security data cannot be shared due to privacy regulations and competitive concerns~\cite{mothukuri2021}, yet effective threat detection requires learning from diverse attack patterns across clouds. Traditional machine learning approaches~\cite{pan2009,csurka2017} fail because they assume either access to target domain labels or the ability to share data centrally, neither of which holds in multi-cloud security contexts.
+
+Federated learning~\cite{mcmahan2017,kairouz2021} provides privacy-preserving collaboration but struggles with severe distribution heterogeneity across clouds, achieving only 78--82\% accuracy in recent studies when attack distributions differ substantially. Recent advances in 2024 have introduced Byzantine-robust mechanisms such as BALANCE~\cite{fang2024} using local similarity-based reference models and RFLPA~\cite{mai2024}, which combine secure aggregation with Byzantine detection through cosine similarity computed via verifiable packed Shamir secret sharing. However, these methods do not address the fundamental distribution alignment problem inherent to multi-cloud environments.
+
+\subsection{Optimal Transport for Security: State of the Art}
+
+Optimal transport theory provides a mathematical framework for principled distribution alignment by computing minimal-cost transformations between probability measures. The Wasserstein distance~\cite{villani2008,peyre2019} quantifies distributional differences geometrically, offering advantages over moment matching~\cite{long2015} or maximum mean discrepancy approaches that fail to capture the structured nature of distribution shifts in security data.
+
+Recent theoretical advances in 2024--2025 have significantly improved computational efficiency. The Progressive Entropic Optimal Transport method~\cite{kassraie2024} addresses hyperparameter tuning by dividing the mass displacement across multiple steps with an automatically scheduled regularization strength, achieving faster and more robust computation than standard Sinkhorn solvers. Unbalanced optimal transport methods~\cite{eyring2024,zhang2024} handle the class imbalance inherent in attack detection by preserving relevant features during domain translation when different cloud providers observe vastly different attack distributions.
+
+Recent studies have begun to explore optimal transport in security contexts. The Wasserstein distance guided feature tokenizer transformer domain adaptation framework~\cite{rasheed2022} demonstrates optimal transport's utility for measuring domain gaps in network intrusion detection, though it operates in centralized settings without privacy preservation. Similarly, federated optimal transport methods~\cite{redko2020,alvarez2021} have emerged for general domain adaptation tasks, providing a theoretical foundation for the computation of distributed optimal transport.
+
+However, no prior work has combined optimal transport with differential privacy guarantees, Byzantine-robust federated aggregation, and comprehensive evaluation across heterogeneous multi-cloud security domains. This gap is significant: while optimal transport provides principled distribution alignment and recent federated methods enable distributed computation, existing approaches do not address the unique security requirements of multi-cloud intrusion detection where adversarial participants may inject poisoned updates and regulatory constraints mandate formal privacy guarantees.
+
+\subsection{Technical Challenges and Research Gaps}
+
+Integrating optimal transport with privacy-preserving multi-cloud intrusion detection presents four fundamental technical challenges. First, computational intractability arises because standard optimal transport algorithms~\cite{villani2008,kantorovich1942} require $O(n^3)$ complexity using Hungarian methods or $O(n^2 \log n)$ with Sinkhorn iterations~\cite{cuturi2013,altschuler2017}. Cloud security deployments generate millions of events hourly, rendering these prohibitive for sub-100\,ms real-time detection. Although recent advances have achieved $O(n^2)$ through importance sparsification and low-rank factorization~\cite{scetbon2024}, their applicability to high-dimensional network traffic remains unexplored.
+
+Second, privacy preservation presents a paradox: computing transport plans between attack distributions reveals sensitive security intelligence regarding vulnerabilities and detection capabilities. Existing privacy-preserving optimal transport methods achieve $(\epsilon, \delta)$-differential privacy through noise injection~\cite{dwork2006}, yet the impact on attack detection accuracy remains uncharacterized, and cumulative privacy degradation across multiple federated rounds must be formally accounted for via composition theorems~\cite{mironov2017,balle2020}. Recent proactive differential privacy work~\cite{vandijk2024} provides closed-form guarantees for differentially private stochastic gradient descent but has not been extended to optimal transport formulations.
+
+Third, adversarial robustness gaps exist because strategic adversaries can poison training data, inject malicious updates during federated aggregation, or craft adversarial perturbations by exploiting transport maps. Existing optimal transport formulations lack adversarial robustness guarantees despite security applications demanding certified bounds. Established robust aggregation methods such as Krum~\cite{blanchard2017}, coordinate-wise median~\cite{yin2018}, and Bulyan~\cite{guerraoui2018} have not been evaluated in the optimal transport context. Although Wasserstein generative adversarial networks~\cite{arjovsky2017} established connections between optimal transport and adversarial training, practical defense mechanisms for federated intrusion detection remain absent. Frequency-domain analysis~\cite{fereidooni2024} shows that backdoors cause characteristic energy shifts detectable through discrete cosine transform; however, integration with optimal transport remains unexplored.
+
+Fourth, heterogeneous cloud environments pose challenges because each cloud provider implements distinct network architectures, logging schemas, and telemetry systems. Optimal transport methods assume common feature spaces, yet multi-cloud scenarios require handling heterogeneous representations with missing features, different sampling rates, and incompatible taxonomies under non-IID conditions~\cite{li2020noniid}. Partial optimal transport~\cite{nguyen2024} addresses non-overlapping supports with $\tilde{O}(n^2/\epsilon^4)$ complexity but has not been evaluated on security domains with incompatible attack taxonomies.
+
+\subsection{Threat Model}
+
+We consider a threat model that encompasses three distinct attack vectors. M1 represents honest-but-curious cloud providers who follow the federated protocol correctly but attempt to infer sensitive information about other participants' security data from shared marginal distributions or transport plans. This corresponds to privacy threats where adversaries exploit statistical leakage to reconstruct attack patterns, vulnerability profiles, or detection thresholds of competitors. Differential privacy with carefully calibrated noise addition provides protection against such inference attacks.
+
+M2 represents Byzantine adversaries, where up to $q < 1/2$ fraction of cloud participants are malicious, sending arbitrary transport plans designed to maximize target domain error, degrade global model quality, or inject backdoors where specific trigger patterns cause misclassification. Byzantine participants may coordinate attacks, adapt strategies based on observed aggregations, and exploit knowledge of the robust aggregation protocol. We assume that adversaries cannot compromise the central aggregation server or break cryptographic primitives. We evaluate against the standard Byzantine threat taxonomy including random noise injection, sign-flipping, and model replacement attacks~\cite{fang2020local}.
+
+M3 represents distribution shift across clouds. Even without adversarial manipulation, heterogeneous cloud environments exhibit severe distributional differences in attack patterns, normal traffic characteristics, and feature representations. This natural distribution shift, quantifiable via the Wasserstein distance between marginal distributions, creates a fundamental domain adaptation problem that must be addressed for effective cross-cloud threat detection without access to labeled target data. Our framework provides formal security guarantees against all three threat models: differential privacy defends against M1, Byzantine-robust aggregation mitigates M2, and optimal transport addresses M3.
+
+The honest-but-curious assumption for M1 is grounded in the secure multi-party computation paradigm~\cite{goldreich2004}, where institutional participants comply with contractual service-level agreements and regulatory obligations such as GDPR and SOC~2 compliance yet may exploit permitted information access. This model is standard in cross-organizational federated settings where major cloud providers have reputational and legal incentives to follow protocols faithfully~\cite{kairouz2021}. Importantly, differential privacy provides defense-in-depth: the formal $(\epsilon, \delta)$-DP guarantees hold mathematically regardless of adversary behavior, making the combined DP and honest-but-curious model strictly more robust than either mechanism alone. The Byzantine tolerance threshold $q < 1/2$ follows from the classical impossibility result of Lamport, Shostak, and Pease~\cite{lamport1982}, which proves that consensus requires strictly more than half honest participants when cryptographic signatures are available. For practical multi-cloud deployments with $K = 5$ vetted providers, tolerating $q = 0.4$ means up to two compromised participants, which represents a conservative bound given the vetted nature and independent operation of major cloud infrastructure providers. Blanchard et al.~\cite{blanchard2017} further showed that no linear combination of gradients, including FedAvg, can tolerate even a single Byzantine failure, motivating our transport-plan-based robust aggregation approach.
+
+\subsection{Principal Contributions}
+
+This study makes four principal contributions by addressing the identified challenges through the first comprehensive integration of privacy-preserving optimal transport with federated multi-cloud intrusion detection.
+
+First, we developed a privacy-preserving federated optimal transport framework by integrating differential privacy with Sinkhorn-based optimal transport for secure cross-cloud adaptation. The framework achieves $(\epsilon = 0.85, \delta = 5 \times 10^{-4})$-differential privacy, representing a global guarantee over $T = 50$ federated rounds with per-round $\delta_0 = 10^{-5}$, through calibrated Gaussian noise injection to marginal estimates while maintaining 94.2\% detection accuracy. We provide explicit multi-round R\'{e}nyi DP composition accounting~\cite{mironov2017} demonstrating that our RDP-based bound ($\epsilon = 0.85$) is 5$\times$ tighter than basic composition ($\epsilon = 4.25$). We prove utility-preserving bounds showing that private transport plans degrade detection performance by at most 3.1\% compared to non-private variants, establishing a formal characterization of the privacy-utility trade-off for optimal transport in security contexts.
+
+Second, we introduce adaptive computational optimization through entropy regularization scheduling that reduces Sinkhorn complexity from $O(\epsilon^{-3})$ naive convergence to $O(\log(1/\epsilon))$ stages through doubling schedules, where $\epsilon$ denotes the regularization parameter controlling transport plan entropy. Combined with importance sparsification achieving $\tilde{O}(n)$ per-iteration complexity, this enables real-time adaptation with 15--23$\times$ speedup versus standard methods. We provide convergence guarantees showing that regularization scheduling maintains solution quality within $\epsilon_{\text{opt}} < 0.01$ of exact optimal transport while meeting millisecond-latency constraints.
+
+Third, we developed a Byzantine-robust aggregation protocol that tolerates up to 40\% malicious participants through transport-plan-based anomaly detection. The protocol uses the Wasserstein distance between local and global attack distributions for outlier identification, combined with trimmed-mean aggregation that removes extreme transport maps. We benchmark against established robust FL baselines including Krum~\cite{blanchard2017}, Multi-Krum, coordinate-wise median~\cite{yin2018}, and Bulyan~\cite{guerraoui2018}, demonstrating that Wasserstein-space aggregation outperforms gradient-space alternatives by 1.6--3.6 percentage points. We prove that the protocol converges to within $O(\sqrt{q/K})$ of the optimal global model under $q$ fraction Byzantine adversaries across $K$ clients.
+
+Fourth, we conducted comprehensive empirical validation on the Integrated Cloud Security 3Datasets spanning three security domains with extensive scalability analysis across $K \in \{3, 5, 10, 20\}$ clients and non-IID heterogeneity degrees ($\alpha_{Dir} \in \{0.1, 0.5, 1.0, 10.0\}$), joint privacy--utility--communication trade-off ablations, and a zero-day attack case study. The Cross-domain evaluation demonstrated 15--21\% accuracy improvements compared to federated learning baselines including FedAvg, FedProx, and FedKD-IDS, with particularly strong performance in distribution shift scenarios where the target and source attack patterns differ substantially.
+
+The remainder of this paper is organized as follows. Section~\ref{sec:related} reviews related work on optimal transport, privacy-preserving machine learning, federated intrusion detection, and identifies critical gaps. Section~\ref{sec:framework} presents the mathematical framework, including Wasserstein distance formulations, differential privacy integration, formal composition accounting, and Byzantine robustness theory. Section~\ref{sec:architecture} describes the PPFOT-IDS architecture with algorithmic details. Section~\ref{sec:methodology} describes the experimental methodology, including datasets, baselines, and evaluation metrics. Section~\ref{sec:results} presents comprehensive results, scalability studies, and ablation studies. Section~\ref{sec:discussion} discusses implications, limitations, and future directions. Section~\ref{sec:conclusion} concludes.
+
+
+%% ====================================================================
+\section{Related Work and Research Positioning}
+\label{sec:related}
+%% ====================================================================
+
+\subsection{Optimal Transport for Domain Adaptation}
+
+Optimal transport~\cite{villani2008,kantorovich1942} provides principled methods to measure and transform probability distributions using the Kantorovich formulation. Given the source distribution $\mu$ and the target distribution $\nu$ defined in the metric space $(\mathcal{X}, d)$, where $\mathcal{X}$ denotes the feature space and $d$ is a distance metric. The $p$-Wasserstein distance measures how much `work' is needed to transform one distribution into another, formally defined as:
+\begin{equation}
+W_p(\mu, \nu) = \inf_{\gamma \in \Pi(\mu,\nu)} \left( \int_{\mathcal{X} \times \mathcal{X}} d(x, y)^p \, d\gamma(x, y) \right)^{1/p}
+\end{equation}
+where $\Pi(\mu, \nu)$ denotes the set of coupling measures (also called transport plans or joint distributions) with marginal $\mu$ and $\nu$. The Coupling $\gamma$ describes how the probability mass is transported from the source to the target distribution, with $d(x, y)$ representing the ground cost of moving a unit of mass from location $x$ to $y$. This formulation was introduced by Kantorovich in 1942 and provides a geometrically meaningful distance between probability measures with respect to the underlying metric structure. Intuitively, the Wasserstein distance captures the minimum effort required to reshape one distribution of network traffic into another, where ``effort'' reflects both how far traffic patterns must shift in feature space and how much probability mass requires relocation; this geometric sensitivity makes it particularly suited to measuring domain shifts between cloud providers whose attack distributions differ structurally rather than merely in moments.
+
+Courty et al.~\cite{courty2017} pioneered OT for domain adaptation through Joint Distribution Optimal Transport (JDOT), minimizing combined geometric transport and task-specific costs. Damodaran et al.~\cite{damodaran2018} extended JDOT to deep networks with a joint feature extractor and transport plan training.
+
+Computational advances focused on entropic regularization~\cite{cuturi2013}, enabling Sinkhorn algorithm solution with $O(n^2/\epsilon^3)$ convergence. Doubling schedules~\cite{altschuler2017} achieve exponential convergence, reducing iterations to $O(\log(1/\epsilon_{target}))$.
+
+Recent 2024--2025 advances significantly expanded OT capabilities. ProgOT~\cite{kassraie2024} addressed hyperparameter tuning by automatic regularization scheduling across multiple steps. Unbalanced OT methods~\cite{eyring2024} incorporate re-scaling to preserve the relevant features during domain translation. Progressive Partial OT~\cite{zhang2024} achieves 3.6--5.8 point improvements through progressive marginal updates with KL-divergence constraints, applicable when target clouds observe attack subsets. The Low-rank factorization~\cite{scetbon2024} reduces the complexity of the quadratic space by using anchor points. The Bi-level Unbalanced OT~\cite{chen2025} simultaneously learns sample-level and class-level transport plans for partial domain adaptation.
+
+WDFT-DA~\cite{rasheed2022} represents the only published OT application for network security that uses the Wasserstein distance for the quantification of the domain gap in transformer-based intrusion detection. However, it operates centrally, without privacy preservation or federated Byzantine robustness.
+
+\textit{Critical Gap 1:} No existing study applies optimal transport to federated intrusion detection under privacy constraints.
+
+\subsection{Privacy-Preserving Machine Learning and DP Composition}
+
+Differential privacy~\cite{dwork2006,dwork2014} provides rigorous mathematical guarantees that limit information leakage from statistical computations. A randomized mechanism $\mathcal{M}: \mathcal{D}^n \to \mathcal{R}$, where $\mathcal{D}$ denotes the data domain and $\mathcal{R}$ the output space, satisfies $(\epsilon, \delta)$-differential privacy if for all adjacent datasets $D, D'$ differs in one record and in all measurable sets $S$:
+\begin{equation}
+\Pr[\mathcal{M}(D) \in S] \leq e^\epsilon \Pr[\mathcal{M}(D') \in S] + \delta
+\end{equation}
+
+The privacy parameter $\epsilon$ quantifies the maximum distinguishability between the outputs, with smaller values providing stronger protection. The probability of failure $\delta$ accounts for negligible privacy loss events. Common choices span $\epsilon \in [0.1, 10]$ depending on the sensitivity, with $\delta = O(1/n^2)$ for datasets of size $n$.
+
+The Gaussian mechanism~\cite{dwork2006,balle2018} achieves DP by adding noise with variance $\sigma^2 = 2\Delta^2 \log(1.25/\delta)/\epsilon^2$ where $\Delta$ quantifies maximum function output change. For optimal transport, PrivPGD~\cite{chen2022} demonstrated feasibility through noisy marginal estimation with a particle gradient descent that minimizes the Sinkhorn divergence.
+
+For federated learning across $T$ rounds, DP composition is critical: basic composition yields $(\epsilon_0 T, T\delta_0)$ privacy, while advanced composition~\cite{kairouz2015} gives $(\epsilon_0\sqrt{2T\ln(1/\delta')} + T\epsilon_0(e^{\epsilon_0}-1), T\delta_0 + \delta')$. R\'{e}nyi differential privacy (RDP)~\cite{mironov2017} provides a tighter composition: if mechanism $\M$ satisfies $(\alpha, \rho)$-RDP, then the composition of $T$ mechanisms satisfies $(\alpha, T\rho)$-RDP. The PRV accountant~\cite{gopi2021} achieves numerically tight bounds by convolution of the privacy loss distribution. These composition tools are essential for reporting meaningful privacy budgets within realistic training horizons.
+
+FedAvg~\cite{mcmahan2017} enabled distributed training with periodic aggregation. Privacy enhancement through DP was introduced through moments accountants~\cite{abadi2016}, enabling tight tracking of privacy loss throughout rounds.
+
+Recent 2024--2025 advances achieved tighter accounting and better utility. Proactive DP~\cite{vandijk2024} provides closed-form $(\epsilon, \delta)$-guarantees connecting all DP-SGD parameters, enabling a-priori parameter selection. The neural collapse work~\cite{wang2024nc} proves that the misclassification error is dimension-independent when the ideal distance of the feature is below the threshold. R\'{e}nyi DP in the Shuffle Model~\cite{chen2024rdp} presents an asymptotically optimal analysis that achieves amplification from $\epsilon_0$ to $O(\epsilon_0/\sqrt{n})$. FFT-based accounting~\cite{guo2024} uses Privacy Loss Distributions to reduce hyperparameter tuning.
+
+Tram\`{e}r et al.'s ICML 2024 Best Paper~\cite{tramer2024} questions whether web-scraped public datasets should be considered privacy-preserving for DP-ML pretraining, which is relevant when IDS models use public network traffic data potentially containing sensitive patterns.
+
+\textit{Critical Gap 2:} Although differential privacy has been applied to federated learning and separately to optimal transport, no work combines formal DP composition with optimal transport for multi-cloud intrusion detection where marginal distributions reveal sensitive security intelligence.
+
+\subsection{Federated Learning for Intrusion Detection}
+
+Recent federated IDS systems have limitations in terms of severe distribution heterogeneity. FedKD-IDS~\cite{zhao2022} achieves Byzantine robustness through knowledge distillation-based logit verification but assumes similar attack distributions. DVACNN-Fed~\cite{preuveneers2018} used variational autoencoders for intrinsic privacy but lacked formal DP guarantees or domain adaptation. Stochastic multimodal approaches with uncertainty quantification~\cite{anaedevha2026stochastic} have demonstrated robust detection under noisy conditions but operate in centralized settings without federated privacy guarantees.
+
+Recent 2024--2025 work advanced Byzantine-robust federated learning. The foundational work includes Krum~\cite{blanchard2017}, which selects the gradient closest to its neighbors; coordinate-wise median~\cite{yin2018}, which applies element-wise median filtering; and Bulyan~\cite{guerraoui2018}, which combines Krum selection with trimmed mean. BALANCE~\cite{fang2024} introduces robust averaging through local similarity where each client uses its own model as a reference, achieving convergence matching Byzantine-free settings on partially connected topologies. RFLPA~\cite{mai2024} reconciles secure aggregation with Byzantine robustness by computing cosine similarity via verifiable Shamir secret sharing with $O(M + N)$ communication. Lancelot~\cite{wei2025} combined Byzantine-robust aggregation with FHE achieving 20$\times$ faster processing.
+
+Graph-based approaches address network topology. FedGAT~\cite{wu2024} organizes traffic chronologically with graph structures applicable to multi-cloud correlation. Uncertainty-calibrated hierarchical approaches with multi-scale temporal modeling~\cite{anaedevha2026gp} address temporal dependencies in intrusion detection but have not been extended to federated cross-domain settings. CCS 2024's distinguished paper~\cite{yang2024} presents first certified Federated Graph Learning defense. For non-IID data specifically, Li et al.~\cite{li2020noniid} characterized convergence under heterogeneous data distributions, PEAR~\cite{sun2025} achieves 16.4--53.2\% error reduction, and D\"IoT~\cite{nguyen2019diot} demonstrates IoT anomaly detection under heterogeneous deployment. FreqFed~\cite{fereidooni2024} demonstrates backdoors cause energy shifts detectable via DCT.
+
+\textit{Critical Gap 3:} Existing federated IDS systems lack principled distribution alignment mechanisms, relying on generic aggregation to perform poorly under severe domain shift.
+
+Recent work has begun addressing multi-cloud security specifically, though with significant limitations. HMFLA-ADS~\cite{hmfla2025} combines hybrid metaheuristic optimization with federated learning across public, private, and hybrid cloud deployments, but lacks formal privacy guarantees and does not address distribution alignment. Abusitta et al.~\cite{abusitta2019} proposed a cooperative game-theoretic multi-cloud IDS with trust and fairness assurance, yet this approach is centralized and predates modern federated learning advances. The AI-driven multi-cloud security framework of Rashid and Yaseen~\cite{rashid2025} employs federated LSTM models for anomaly detection in hybrid cloud environments but similarly lacks differential privacy guarantees and domain adaptation mechanisms. These multi-cloud-specific approaches confirm the practical demand for cross-cloud intrusion detection while highlighting the absence of principled distribution alignment with formal privacy guarantees.
+
+\subsection{Adversarial Machine Learning in Security}
+
+The adversarial robustness for intrusion detection has received increasing attention. IADA~\cite{chen2023} uses adversarial training for domain-invariant features in GRU-based detection but operates centrally. Spectral normalization~\cite{miyato2018} provides Lipschitz bounds, whereas certified defenses~\cite{tsuzuku2018} offer provable guarantees within the perturbation radii. IDS evaluation methodology follows established protocols: Sharafaldin et al.~\cite{sharafaldin2018} standardized evaluation metrics including detection rate, false positive rate, and per-class F1-scores, while Ring et al.~\cite{ring2019} survey flow-based IDS datasets and evaluation challenges.
+
+Recent advances in 2024 include certified defenses through diffusion-based augmentation~\cite{wang2024diff}. NIDS-Vis~\cite{liu2024} introduced a generalized adversarial robustness for unsupervised outlier detection. A Deep RL-based IDS analysis~\cite{ahmed2024} revealed architectural robustness factors that demonstrate adversarial transferability in black-box settings. Fang et al.~\cite{fang2020local} characterized local model poisoning attacks against Byzantine-robust federated learning, demonstrating that adaptive adversaries can circumvent standard defenses. State-space models with selective mechanisms have shown promise for poisoning-resilient sequential modeling~\cite{anaedevha2026mambashield}, though their integration with optimal transport remains unexplored.
+
+Zero trust integration with multi-cloud IDS has matured. Adanigbo et al.~\cite{adanigbo2024} proposed comprehensive frameworks incorporating identity management, centralized policy engines, micro-segmentation, and integration of service meshes with adaptive trust scoring.
+
+\textit{Critical Gap 4:} No study provides certified adversarial robustness for federated optimal transport under Byzantine attacks with benchmarking against established robust aggregation baselines.
+
+\subsection{Research Positioning}
+
+PPFOT-IDS addresses all four identified gaps through the first comprehensive framework combining: (1) privacy-preserving optimal transport for principled cross-cloud distribution alignment with formal $(\epsilon, \delta)$-DP guarantees and tight RDP composition accounting on marginal estimates; (2) Byzantine-robust aggregation using transport-plan-based outlier detection tolerating up to 40\% malicious participants, benchmarked against Krum, Multi-Krum, coordinate-wise median, and Bulyan; (3) adaptive computational optimization achieving 15--23$\times$ speedup through regularization scheduling and importance sparsification; and (4) comprehensive evaluation on heterogeneous security domains with scalability analysis across client participation and non-IID distributions.
+
+Table~\ref{tab:comparison_summary} provides a high-level comparison of PPFOT-IDS against key baselines across privacy, robustness, and domain adaptation dimensions.
+
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{High-level comparison of PPFOT-IDS with representative baselines. $\checkmark$ = supported; $\times$ = absent; Partial = limited support.}
+\label{tab:comparison_summary}
+\centering
+\begin{tabular}{lcccccccc}
+\hline
+\textbf{Method} & \textbf{Formal DP} & \textbf{DP Comp.} & \textbf{Byzantine} & \textbf{Domain} & \textbf{Federated} & \textbf{Multi-Cloud} & \textbf{Non-IID} & \textbf{Avg. Acc.} \\
+ & \textbf{Guarantee} & \textbf{Accounting} & \textbf{Robustness} & \textbf{Adaptation} & \textbf{Learning} & \textbf{Evaluated} & \textbf{Evaluated} & \textbf{(\%)} \\
+\hline
+FedAvg~\cite{mcmahan2017} & $\times$ & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & 75.6 \\
+FedProx~\cite{li2020} & $\times$ & $\times$ & $\times$ & Partial & $\checkmark$ & $\times$ & $\checkmark$ & 77.2 \\
+FedKD-IDS~\cite{zhao2022} & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & 79.6 \\
+DVACNN-Fed~\cite{preuveneers2018} & Partial & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & 81.0 \\
+Private FedAvg~\cite{abadi2016} & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & 73.3 \\
+HMFLA-ADS~\cite{hmfla2025} & $\times$ & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & --- \\
+IADA~\cite{chen2023} & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & 85.1 \\
+WDFT-DA~\cite{rasheed2022} & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & 86.9 \\
+\hline
+PPFOT-IDS (ours) & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{92.1} \\
+\hline
+\end{tabular}
+\end{table*}
+
+%% ====================================================================
+\section{Mathematical Framework}
+\label{sec:framework}
+%% ====================================================================
+
+\subsection{Problem Formulation}
+
+\textit{Federated Multi-Cloud Setup.} We consider $K$ cloud providers participating in federated intrusion detection. Each cloud $k \in \{1, \ldots, K\}$ maintains a private dataset $\mathcal{D}_k = \{(x_i^k, y_i^k)\}_{i=1}^{n_k}$ where:
+\begin{itemize}
+\item Network traffic features: $x_i^k \in \mathcal{X} \subseteq \mathbb{R}^d$ (feature space $\mathcal{X}$ with dimension $d$ varying across clouds owing to heterogeneous telemetry systems).
+\item Binary activity labels: $y_i^k \in \mathcal{Y} = \{0, 1\}$ indicate benign (0) or malicious (1) traffic.
+\item Distribution shift: Source domain $\mu_S$ (training) and target domain $\mu_T$ (deployment) with shift quantified by $W_p(\mu_S, \mu_T)$.
+\end{itemize}
+
+\textit{Objective:} Learn a detection function $f: \mathcal{X} \to \mathcal{Y}$ that generalizes from the source to target domains under three constraints corresponding to our threat model:
+\begin{enumerate}
+\item \textit{M1 (Privacy):} Achieve formal $(\epsilon, \delta)$-differential privacy protecting sensitive attack intelligence.
+\item \textit{M2 (Adversarial Robustness):} Maintain robustness against up to $q < 1/2$ fraction Byzantine adversaries.
+\item \textit{M3 (Domain Adaptation):} Effectively handles the distribution shift $W_p(\mu_S, \mu_T)$ without target domain labels.
+\end{enumerate}
+
+\subsection{Wasserstein Distance and Optimal Transport}
+
+For discrete empirical distributions $\mu = \sum_{i=1}^n a_i \delta_{x_i}$ and $\nu = \sum_{j=1}^m b_j \delta_{y_j}$ where $\delta_x$ denotes the Dirac measure at $x$, and weights satisfy $a \in \Delta_n$, $b \in \Delta_m$ (the probability simplices), the discrete optimal transport problem becomes:
+\begin{equation}
+W_p^p(\mu, \nu) = \min_{\gamma \in \Pi(a,b)} \sum_{i=1}^n \sum_{j=1}^m \gamma_{ij} C_{ij}
+\end{equation}
+where $C_{ij} = d(x_i, y_j)^p$ is the ground cost matrix and $\Pi(a, b) = \{\gamma \in \mathbb{R}_+^{n \times m} : \gamma \mathbf{1}_m = a, \gamma^T \mathbf{1}_n = b\}$ denotes the set of feasible transport plans satisfying marginal constraints with $\mathbf{1}_n$ representing the all-ones vector of dimension $n$.
+
+The entropic regularization formulation adds an entropy term:
+\begin{equation}
+W_\epsilon(\mu, \nu) = \min_{\gamma \in \Pi(a,b)} \sum_{ij} \gamma_{ij} C_{ij} - \epsilon \sum_{ij} \gamma_{ij} \log \gamma_{ij}
+\end{equation}
+where $\epsilon > 0$ controls the regularization strength. As $\epsilon \to 0$, the solution converges to the exact optimal transport plan, while larger $\epsilon$ yields smoother transport with faster computation. In practical terms, the regularization parameter governs a trade-off between the fidelity of the alignment map and computational tractability: larger $\epsilon$ encourages the transport plan to spread probability mass more evenly across target bins, preventing degenerate point-to-point assignments that are exact but computationally expensive to find.
+
+\textit{Proposition 1 (Entropic OT Solution).} The solution to (4) has the form $\gamma^* = \text{diag}(u)K\text{diag}(v)$ where $K = \exp(-C/\epsilon)$ is the Gibbs kernel with an element-wise exponential, and scaling vectors $u \in \mathbb{R}_+^n$, $v \in \mathbb{R}_+^m$ satisfy $\text{diag}(u)Kv = a$ and $K^T u = b$, solvable via the Sinkhorn algorithm.
+
+\subsection{Differential Privacy for Marginal Estimation}
+
+To achieve $(\epsilon, \delta)$-differential privacy for marginal distributions shared in federated optimal transport, we employ a Gaussian mechanism on the histogram representations. Each cloud $k$ computes a histogram $h^k \in \mathbb{R}^B$ over $B$ bins discretizing feature space $\mathcal{X}$.
+
+\textit{Definition 1 (Global Sensitivity).} The global sensitivity of the histogram computation is $\Delta = \max_{D,D'} \|h(D)-h(D')\|_2$ where $D, D'$ are adjacent datasets that differ in one record. For normalized histograms with $\|h\|_1 = 1$, we have $\Delta = \sqrt{2}/n$ where $n$ is the dataset size.
+
+\textit{Theorem 2 (Gaussian Mechanism).} Adding noise $\mathcal{N}(0, \sigma^2 I)$ with variance
+\begin{equation}
+\sigma^2 = 2\Delta^2 \log(1.25/\delta)/\epsilon^2
+\end{equation}
+to the histogram $h$ achieves $(\epsilon, \delta)$-differential privacy.
+
+For our multi-cloud setting with $K$ clouds and $T$ communication rounds, we tracked the cumulative privacy loss using the moments accountant~\cite{abadi2016}
+\begin{equation}
+\delta_{total} = \min_\lambda \left[ \exp \left( \sum_{t=1}^T \alpha_\lambda(\mathcal{M}_t) - \lambda\epsilon \right) \right]
+\end{equation}
+where $\alpha_\lambda(\mathcal{M}_t)$ is the R\'{e}nyi divergence of order $\lambda$ for mechanism $\mathcal{M}_t$ at round $t$. For composition of $T$ identical Gaussian mechanisms with per-round privacy $(\epsilon_0, \delta_0)$, the global guarantee becomes $(\epsilon_0, T\delta_0)$ under basic composition, or tighter bounds $(\epsilon_0, \delta_{total})$ with $\delta_{total} = T\delta_0$ using advanced composition~\cite{kairouz2021}.
+
+\textit{Lemma 3 (Privacy-Preserving Marginals).} Let $\tilde{h}^k = h^k + \mathcal{N}(0, \sigma^2 I)$ be the noisy histogram from cloud $k$. The privatized empirical distribution $\tilde{\mu}^k = \sum_{b=1}^B \tilde{h}^{(b)}_k \delta_{c_b}$ where $c_b$ is the center of bin $b$, satisfies $(\epsilon, \delta)$-differential privacy with respect to the underlying dataset $\mathcal{D}_k$.
+
+\subsubsection{Multi-Round DP Composition via R\'{e}nyi Divergence}
+\label{sec:rdp_composition}
+
+A critical requirement for federated deployment is accounting for privacy degradation across $T$ communication rounds. We employ R\'{e}nyi differential privacy (RDP)~\cite{mironov2017} for tight composition.
+
+\textit{Definition (R\'{e}nyi DP).} A mechanism $\M$ satisfies $(\alpha, \rho)$-RDP if for all adjacent datasets $D, D'$: $D_\alpha(\M(D) \| \M(D')) \leq \rho$ where $D_\alpha$ is the R\'{e}nyi divergence of order $\alpha > 1$.
+
+\textit{Lemma (RDP of Gaussian Mechanism~\cite{mironov2017}).} The Gaussian mechanism with sensitivity $\Delta$ and noise $\sigma$ satisfies $(\alpha, \alpha\Delta^2/(2\sigma^2))$-RDP for all $\alpha > 1$.
+
+\textit{Theorem (Multi-Round Privacy Guarantee).} After $T = 50$ rounds, each applying the Gaussian mechanism with our calibrated noise $\sigma^2 = 5.127 \times 10^{-8}$ and sensitivity $\Delta = \sqrt{2}/n$ with $n \approx 1.6 \times 10^5$, the composed mechanism achieves $(\epsilon = 0.85, \delta = 5 \times 10^{-4})$-DP via optimized RDP-to-DP conversion with $\alpha^* \approx 15.1$. Table~\ref{tab:composition} compares the resulting global budget across composition methods, demonstrating that RDP accounting achieves a 5$\times$ tighter bound than basic composition. The detailed numerical derivation is provided in the Supplementary Material.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Global privacy budget under different DP composition methods for $T = 50$ rounds, $\delta = 5 \times 10^{-4}$.}
+\label{tab:composition}
+\centering
+\begin{tabular}{lcc}
+\hline
+\textbf{Composition Method} & \textbf{Global} $\epsilon$ & \textbf{Reference} \\
+\hline
+Basic composition & 4.25 & \cite{dwork2006} \\
+Advanced composition & 1.92 & \cite{kairouz2015} \\
+Moments accountant & 1.04 & \cite{abadi2016} \\
+R\'{e}nyi DP (ours) & \textbf{0.85} & \cite{mironov2017} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Utility Analysis for Private Optimal Transport}
+
+We analyzed how differential privacy noise affects the quality of the learned transport map and the subsequent detection accuracy.
+
+\textit{Theorem 4 (Utility Bound for Private OT).} Let $\gamma^*$ be the optimal transport plan between true marginals and $\tilde{\gamma}^*$ be the plan computed from the noisy marginals $\tilde{\mu}, \tilde{\nu}$. Under $(\epsilon, \delta)$-DP with noise variance $\sigma^2$, the Frobenius norm difference satisfies:
+\begin{equation}
+\|\gamma^* - \tilde{\gamma}^*\|_F \leq O\left(\frac{1}{\sqrt{n}\epsilon}\right)
+\end{equation}
+with probability at least $1 - \delta$, where $n = \min(|\text{supp}(\mu)|, |\text{supp}(\nu)|)$ denotes the minimum support size.
+
+\textit{Proof sketch.} The proof follows from the Lipschitz continuity of the Sinkhorn operator with respect to the marginal perturbations. The Gaussian mechanism adds noise with a magnitude $O(\sigma) = O(1/(\epsilon\sqrt{n}))$, which propagates through the Sinkhorn iterations with a multiplicative constant depending on the regularization parameter and the cost matrix condition number. The full proof with explicit assumptions (bounded feature space, cost matrix regularity) is provided in the Supplementary Material.
+
+This bound shows that for large cloud datasets ($n \gg 10^6$), strong privacy ($\epsilon < 1$) incurs minimal utility degradation, which is consistent with our empirical findings in Section~\ref{sec:results}. Put differently, because cloud security datasets are typically large (hundreds of thousands to millions of events), the magnitude of privacy noise scales as $O(1/\sqrt{n})$ and becomes negligible relative to the signal, enabling strong privacy guarantees without significant loss in detection accuracy.
+
+\subsection{Byzantine-Robust Aggregation}
+
+To defend against malicious clouds sending poisoned transport plans (threat model M2), we developed a robust aggregation protocol using geometric median computation in the Wasserstein space.
+
+\textit{Theorem 5 (Convergence under Byzantine attack).} Under the threat model M2 with at most $q < 1/2$ fraction of malicious participants, Algorithm~\ref{alg:byzantine} converges to a global transport plan satisfying:
+\begin{equation}
+\|\gamma_{global} - \gamma_{true}\|_F \leq O\left(\sqrt{\frac{q}{K(1-q)}}\right) + O\left(\frac{1}{\sqrt{n}}\right)
+\end{equation}
+where $\gamma_{true}$ is the optimal transport plan computed from the true distributions of honest participants and $K$ is the total number of clouds; $n$ is the average dataset size, and the bound has a high probability.
+
+\textit{Proof sketch.} The proof uses the concentration of the measure for the geometric median in the Wasserstein space. With $q < 1/2$ Byzantine fraction, at least $K(1-q) > K/2$ honest clients form a concentrated cluster in the transport-plan space. The trimmed aggregation removes outliers, whereas the weighted average over the honest set converges to the true center at the rate $O(1/\sqrt{K_{honest}})$. The statistical error term $O(1/\sqrt{n})$ arises from the finite sample empirical distributions. Full proof in Supplementary Material.
+
+\begin{algorithm}[t]
+\caption{Byzantine-Robust Transport Plan Aggregation}
+\label{alg:byzantine}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Local transport plans $\{\gamma_k\}_{k=1}^K$ from $K$ clouds
+\STATE \textbf{Parameters:} Byzantine tolerance $q \in (0, 0.5)$, threshold multiplier $\alpha > 1$
+\STATE \textbf{Initialize:} Compute pairwise Wasserstein distances
+\FOR{$k = 1$ to $K$}
+    \FOR{$l = 1$ to $K$, $l \neq k$}
+        \STATE $D_{kl} = W_2(\gamma_k, \gamma_l)$ \COMMENT{Wasserstein distance between plans}
+    \ENDFOR
+\ENDFOR
+\STATE \textbf{Identify outliers:} For each cloud $k$, compute
+\STATE $\text{med}_k = \text{median}\{D_{kl} : l \neq k\}$
+\STATE \textbf{Remove extreme outliers:} Flag clouds with
+\STATE $\text{med}_k > \tau = \alpha \cdot \text{median}\{\text{med}_k : k = 1, \ldots, K\}$
+\STATE \textbf{Trimmed aggregation:} Sort remaining clouds by $\text{med}_k$, remove $\lfloor qK \rfloor$ from each tail
+\STATE \textbf{Weighted aggregation:}
+\STATE $\gamma_{global} = \frac{\sum_{k \in \mathcal{H}} w_k \gamma_k}{\sum_{k \in \mathcal{H}} w_k}$ where $\mathcal{H}$ is the honest set
+\STATE \textbf{Return:} $\gamma_{global}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Adversarial Robustness through Lipschitz Constraints}
+
+To provide certified robustness against adversarial perturbations by exploiting the transport map, we enforced Lipschitz continuity through spectral normalization~\cite{miyato2018}.
+
+Let $T_\theta: \mathcal{X} \to \mathcal{X}$ be the neural network parameterizing the transport map with the parameter $\theta$. We enforce the Lipschitz constant $L_T$ through the spectral normalization of each layer as follows:
+\begin{equation}
+W_{SN} = \frac{W}{\sigma(W)}
+\end{equation}
+where $\sigma(W)$ is the largest singular value of the weight matrix $W$, which is efficiently approximated via a power iteration.
+
+\textit{Theorem 6 (Certified Adversarial Robustness).} Let $f = \text{classifier} \circ T_\theta$ be the composition of the transport map and classifier, where $T_\theta$ has a Lipschitz constant $L_T$ and the classifier has Lipschitz constant $L_c$. Then for any adversarial perturbation with $\|\delta\|_2 \leq \epsilon_{adv}$:
+\begin{equation}
+\|f(x + \delta) - f(x)\|_2 \leq L_T \cdot L_c \cdot \epsilon_{adv}
+\end{equation}
+
+This bound guarantees that the prediction changes are bounded proportionally to the perturbation magnitude, thereby providing certified robustness. For intrusion detection, we compute a certified safe radius $\epsilon_{safe}$ below which adversarial perturbations cannot cause misclassification.
+
+%%% NOTE: The remainder of the paper (Sections IV-VIII) continues with 
+
+%% ====================================================================
+\section{PPFOT-IDS Architecture}
+\label{sec:architecture}
+%% ====================================================================
+
+\subsection{System Overview}
+
+The PPFOT-IDS framework operates in three phases: (1) local feature extraction and private marginal estimation at each cloud provider, (2) Byzantine-robust global aggregation computing optimal transport plans between privacy-preserving marginals, and (3) deployment of adapted models to target clouds. As shown in Fig.~\ref{fig:architecture}, this architecture addresses all three threat models: M1 through differential privacy, M2 through Byzantine-robust aggregation, and M3 through optimal transport alignment.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.9\textwidth]{fig1_architecture.pdf}
+\caption{PPFOT-IDS federated architecture. Cloud providers perform local feature extraction and private marginal estimation, sending noisy distributions $\tilde{\mu}_k$ to the central server with $(\epsilon, \delta)$-differential privacy. The server performs Byzantine detection, computes optimal transport plans, and applies robust aggregation. The global transport map $T^*$ is deployed to target environments for attack detection without requiring labeled target data.}
+\label{fig:architecture}
+\end{figure*}
+
+\subsection{Local Feature Extraction and Private Marginal Estimation}
+
+Each cloud $k$ extracts network traffic features $x \in \mathbb{R}^d$ including flow statistics (packet counts, byte volumes, and inter-arrival times), protocol-level features (TCP flags, port numbers, and DNS query characteristics), and behavioral patterns (connection duration and payload entropy). Feature extractor $\phi_k$: Raw Traffic $\to \mathbb{R}^d$ maps raw network events to the common feature space $\mathbb{R}^d$.
+
+To compute privacy-preserving marginals, cloud $k$ discretizes the feature space into $B$ bins and constructs histogram $h^k \in \mathbb{R}^B$ by counting the samples in each bin. The privatized histogram is:
+\begin{equation}
+\tilde{h}^k = h^k + \mathcal{N}(0, \sigma^2 I)
+\end{equation}
+where noise variance $\sigma^2 = 2\Delta^2 \log(1.25/\delta_0)/\epsilon_0^2$ is calibrated for per-round privacy $(\epsilon_0, \delta_0)$ as specified in Theorem~2. The noisy histogram was normalized to obtain the privatized empirical distribution $\tilde{\mu}^k$.
+
+\subsection{Computational Optimization: Adaptive Sinkhorn Scheduling}
+
+To meet real-time detection requirements ($< 100$\,ms latency), we develop an adaptive entropy regularization schedule that reduces Sinkhorn iterations from $O(\epsilon^{-3})$ to $O(\log(1/\epsilon))$ stages:
+
+\begin{algorithm}[t]
+\caption{Adaptive Sinkhorn with Regularization Scheduling}
+\label{alg:sinkhorn}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Cost matrix $C \in \mathbb{R}^{n \times m}$, marginals $a \in \Delta_n$, $b \in \Delta_m$
+\STATE \textbf{Parameters:} $\epsilon_0 = 0.5$, $\epsilon_{min} = 0.01$, $\rho = 0.9$, tolerance $\tau = 10^{-6}$
+\STATE \textbf{Initialize:} $\epsilon \gets \epsilon_0$, $u^{(0)} = \mathbf{1}_n$, $v^{(0)} = \mathbf{1}_m$, $t \gets 0$
+\WHILE{$\epsilon \geq \epsilon_{min}$}
+    \STATE $K = \exp(-C/\epsilon)$ \COMMENT{Gibbs kernel}
+    \WHILE{$\|a - Kv^{(t)}\|_1 > \tau$}
+        \STATE $u^{(t+1)} = a \oslash (Kv^{(t)})$ \COMMENT{element-wise division}
+        \STATE $v^{(t+1)} = b \oslash (K^T u^{(t+1)})$
+        \STATE $t \gets t + 1$
+    \ENDWHILE
+    \STATE $\epsilon \gets \max(\epsilon_{min}, \rho \cdot \epsilon)$ \COMMENT{Decrease regularization}
+\ENDWHILE
+\STATE \textbf{Return:} $\gamma^* = \text{diag}(u^{(t)})K\text{diag}(v^{(t)})$
+\end{algorithmic}
+\end{algorithm}
+
+This scheduling achieves 15--23$\times$ speedup versus the standard Sinkhorn while maintaining the approximation error $\|\gamma^* - \gamma_{exact}\|_F < 0.01$, where $\gamma_{exact}$ denotes the solution of the non-regularized optimal transport problem.
+
+\subsection{Deployment Architecture and Practical Considerations}
+\label{sec:deployment}
+
+The PPFOT-IDS deployment consists of three tiers. The \textit{edge tier} at each cloud provider runs local feature extractors and histogram estimators within existing security information and event management (SIEM) pipelines. The \textit{aggregation tier} is a dedicated server (or replicated servers for fault tolerance) that runs the Byzantine-robust aggregation protocol with TLS-encrypted communication and mutual authentication. The \textit{inference tier} deploys the adapted transport map $T^*$ and classifier as lightweight modules achieving 2.9\,ms per-sample latency.
+
+For synchronization and client churn, PPFOT-IDS operates in synchronous rounds but tolerates stragglers via configurable timeouts: if fewer than $K_{min}$ clients respond within the deadline, the round proceeds with available plans. The Byzantine detection remains valid as long as the honest majority holds among participating clients. For long-term privacy preservation, the cumulative budget is tracked via the RDP accountant (Section~\ref{sec:rdp_composition}), and the system can be configured to halt collaboration when the global $\epsilon$ exceeds a deployment-specific policy threshold.
+
+
+%% ====================================================================
+\section{Experimental Methodology}
+\label{sec:methodology}
+%% ====================================================================
+
+\subsection{Datasets and Preprocessing}
+
+We evaluated the Integrated Cloud Security 3Datasets (ICS3D)~\cite{anaedevha2024} spanning three heterogeneous domains (threat model M3):
+
+\textit{Dataset 1: Container security.} Kubernetes microservices dataset with 157,329 network flows, 78 features, and 10 CVE-specific attacks plus benign traffic (67.3\% benign). Collected from container orchestration environments with attacks including CVE-2022-23648 (containerized vulnerability) and CVE-2021-30465 (runc vulnerability).
+
+\textit{Dataset 2: IoT/IIoT Security.} Edge-IIoTset with DNN variant (236,748 samples, 61 features) and ML variant (187,562 samples, 48 features). The attacks span DoS/DDoS, reconnaissance, man-in-the-middle, injection, and malware across a seven-layer IoT architecture.
+
+\textit{Dataset 3: Enterprise SOC.} Microsoft GUIDE dataset with 589,437 training incidents and 147,359 test incidents from 6,100+ organizations. The coverage includes 33 entity types and 441 MITRE ATT\&CK techniques representing real-world security operations center workflows.
+
+For non-IID partitioning in scalability experiments, we simulate federated clients using Dirichlet-distributed label allocation with $\alpha_{Dir} \in \{0.1, 0.5, 1.0, 10.0\}$ across $K \in \{3, 5, 10, 20\}$ participants, following the evaluation methodology of Sharafaldin et al.~\cite{sharafaldin2018} and Ring et al.~\cite{ring2019}.
+
+\subsection{Cross-Cloud Scenarios}
+
+We evaluate three cross-domain scenarios corresponding to realistic multi-cloud deployments:
+
+\textit{Scenario 1 (Container $\to$ IoT):} Source training on the container dataset and target deployment on Edge-IIoT DNN. Test the generalization from microservice security to IoT/IIoT environments.
+
+\textit{Scenario 2 (IoT $\to$ Enterprise SOC):} Source training on Edge-IIoT ML and target deployment on Microsoft GUIDE. The tests were transferred from IoT intrusion detection to enterprise security operations.
+
+\textit{Scenario 3 (multi-Source $\to$ container):} Federated training across both IoT datasets plus GUIDE training set, target deployment on containers test set. Tests for multi-source domain adaptation under heterogeneous distributions.
+
+\subsection{Baseline Methods}
+
+We compare against seven state-of-the-art methods:
+
+\textit{FedAvg}~\cite{mcmahan2017}: Standard federated averaging with local SGD and periodic aggregation. There was no domain adaptation or explicit privacy beyond secure aggregation.
+
+\textit{FedProx}~\cite{li2020}: Adds proximal regularization $\frac{\mu}{2}\|\theta-\theta_{global}\|^2$ to the local objectives for statistical heterogeneity handling.
+
+\textit{FedKD-IDS}~\cite{zhao2022}: Knowledge distillation-based federated IDS with Byzantine robustness through logit verification. Semi-supervised learning of the target domain.
+
+\textit{DVACNN-Fed}~\cite{preuveneers2018}: A variational autoencoder with CNNs providing intrinsic privacy through encoding. There are no explicit DP guarantees.
+
+\textit{Private FedAvg}~\cite{abadi2016}: FedAvg with DP through gradient clipping and noise injection. RDP accountant for tight privacy tracking.
+
+\textit{IADA}~\cite{chen2023} (centralized oracle): Adversarial domain adaptation with GRU networks for domain-invariant features.
+
+\textit{WDFT-DA}~\cite{rasheed2022} (centralized oracle): Wasserstein distance-guided transformer using OT for domain gaps without privacy preservation or federated learning.
+
+For Byzantine robustness evaluation, we additionally benchmark against established robust FL aggregation methods---Krum~\cite{blanchard2017}, Multi-Krum, coordinate-wise median~\cite{yin2018}, and Bulyan~\cite{guerraoui2018}---applied within our OT framework.
+
+\subsection{Implementation Details and Reproducibility}
+
+All experiments use the following configuration for reproducibility:
+
+\textit{Hardware:} NVIDIA A100 GPU (40\,GB VRAM), 64-core AMD EPYC processor, 512\,GB RAM.
+
+\textit{Software:} PyTorch 2.0, Python 3.10, and POT library v0.9 for optimal transport computations.
+
+\textit{Hyperparameters:} Learning rate $\eta = 10^{-3}$ with cosine annealing, batch size 64, local epochs 5 and communication rounds 100. Transport map network: [input$\to$256$\to$128$\to$64$\to$output] with spectral normalization, batch normalization, and dropout rate of 0.2. Classifier network: [input$\to$128$\to$64$\to$classes] with same regularization.
+
+\textit{Privacy parameters:} Per-round noise calibrated via RDP (Section~\ref{sec:rdp_composition}); global (after $T = 50$ rounds) $\epsilon = 0.85$, $\delta_{total} = 5 \times 10^{-4}$, noise variance $\sigma^2 = 5.127 \times 10^{-8}$ (computed using Equations~5 and~6).
+
+\textit{Rationale for privacy budget selection.} The choice of $\epsilon = 0.85$ is grounded in established guidelines and empirical precedent. NIST SP 800-226~\cite{nist2025} recommends that practitioners select $\epsilon$ values through context-specific analysis while noting that values exceeding 10 may not provide meaningful protection; our operating point falls within the strong-privacy regime ($\epsilon \leq 1$) endorsed by the differential privacy community~\cite{dwork2014}. In terms of industry practice, $\epsilon = 0.85$ is comparable to privacy parameters deployed in production systems by Google for urban mobility analysis ($\epsilon = 0.66$) and Meta for URL dataset release ($\epsilon = 0.41$--$1.69$), as documented in the community Epsilon Registry~\cite{dwork2019expose}. For the security-sensitive context of multi-cloud intrusion detection, where participating organizations must trust that data sharing will not compromise their network security posture, $\epsilon < 1$ is essential to incentivize cross-organizational collaboration. We calibrated this value through the privacy-utility trade-off analysis presented in Section~\ref{sec:sensitivity}, which demonstrates that $\epsilon = 0.85$ represents the knee point where further tightening yields diminishing detection accuracy returns while loosening provides marginal utility gains. The failure probability $\delta_0 = 10^{-5}$ follows the standard recommendation $\delta = O(1/n^2)$ for datasets of size $n > 10^5$~\cite{dwork2014}, and the global guarantee $\delta_{total} = T \delta_0 = 5 \times 10^{-4}$ under basic composition across $T = 50$ rounds remains well below the $10^{-3}$ threshold commonly accepted for security applications.
+
+\textit{Byzantine parameters:} Tolerance $q = 0.4$ (40\% malicious), threshold multiplier $\alpha = 2.0$ (Algorithm~\ref{alg:byzantine}).
+
+\textit{Statistical testing:} All experiments were repeated with five random seeds. Results are reported as mean $\pm$ standard deviation. Statistical significance was assessed using paired $t$-test with a Bonferroni correction ($p < 0.05$).
+
+
+%% ====================================================================
+\section{Experimental Results}
+\label{sec:results}
+%% ====================================================================
+
+\subsection{Cross-Cloud Detection Accuracy}
+
+Table~\ref{tab:accuracy} presents the detection accuracies across the three cross-cloud scenarios. The PPFOT-IDS achieved average accuracy of 92.1\%, substantially outperforming all federated baselines and even exceeding centralized oracle methods that have full access to source data.
+
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{Detection accuracy (\%) across three cross-cloud scenarios. Results reported as mean $\pm$ std over 5 runs. PPFOT-IDS with global privacy budget $\epsilon = 0.85$, $\delta_{total} = 5 \times 10^{-4}$ (RDP composition over $T = 50$ rounds). \textbf{Bold}: best overall; \underline{Underline}: best baseline.}
+\label{tab:accuracy}
+\centering
+\begin{tabular}{lccc|c}
+\hline
+\textbf{Method} & \textbf{Scenario 1} & \textbf{Scenario 2} & \textbf{Scenario 3} & \textbf{Average} \\
+ & Container$\to$IoT & IoT$\to$Enterprise & Multi$\to$Container & \\
+\hline
+\multicolumn{5}{l}{\textit{Federated Learning Methods (Privacy-Preserving)}} \\
+FedAvg & 75.3 $\pm$ 1.2 & 73.1 $\pm$ 1.4 & 78.3 $\pm$ 0.9 & 75.6 \\
+FedProx & 77.1 $\pm$ 1.0 & 74.9 $\pm$ 1.3 & 79.7 $\pm$ 0.8 & 77.2 \\
+FedKD-IDS & 79.8 $\pm$ 0.9 & 76.8 $\pm$ 1.3 & 82.1 $\pm$ 0.8 & 79.6 \\
+DVACNN-Fed & \underline{81.2 $\pm$ 1.1} & \underline{78.4 $\pm$ 1.2} & \underline{83.4 $\pm$ 0.7} & \underline{81.0} \\
+Private FedAvg & 73.4 $\pm$ 1.5 & 69.8 $\pm$ 1.9 & 76.8 $\pm$ 1.3 & 73.3 \\
+\hline
+\multicolumn{5}{l}{\textit{Centralized Methods (Oracle Upper Bounds)}} \\
+IADA (centralized) & 85.7 $\pm$ 0.8 & 82.3 $\pm$ 1.0 & 87.2 $\pm$ 0.6 & 85.1 \\
+WDFT-DA (centralized) & 87.2 $\pm$ 0.7 & 84.1 $\pm$ 0.9 & 89.3 $\pm$ 0.5 & 86.9 \\
+\hline
+PPFOT-IDS (ours) & \textbf{92.4 $\pm$ 0.6} & \textbf{89.7 $\pm$ 0.7} & \textbf{94.2 $\pm$ 0.4} & \textbf{92.1} \\
+\hline
+\end{tabular}
+\end{table*}
+
+\textit{Substantial Improvements over Federated Baselines.} The PPFOT-IDS achieved an improvement of 11.1\% point over the best federated baseline (DVACNN-Fed) across scenarios. The margin is particularly pronounced in Scenario 1 (Container$\to$IoT) with an 11.2 point improvement, where substantial domain shift exists between structured microservice traffic and heterogeneous IoT device patterns.
+
+\textit{Privacy-Accuracy Trade-off.} Despite formal $(\epsilon = 0.85, \delta = 5 \times 10^{-4})$-differential privacy (global guarantee via RDP composition), PPFOT-IDS outperformed Private FedAvg (73.3\% average) by 18.8\% points. This validates our theoretical analysis (Section~\ref{sec:framework}) showing that privatizing marginal distributions incurs minimal utility loss compared to directly privatizing gradients.
+
+\textit{Byzantine Resilience.} A detailed Byzantine robustness analysis appears in Section~\ref{sec:byzantine_results}, where PPFOT-IDS maintains 87.1\% accuracy under 40\% malicious participants versus 52.1\% for FedAvg (Table~\ref{tab:byzantine}).
+
+\textit{Multi-Source Advantage.} Scenario 3 (Multi$\to$Container) achieves the highest accuracy (94.2\%) for PPFOT-IDS, indicating the effective aggregation of knowledge from heterogeneous IoT and enterprise security domains. This 10.3 point improvement over the single-source Scenario 1 demonstrates the value of federated multi-cloud collaboration under optimal transport alignment.
+
+\textit{Exceeding Centralized Oracle Methods.} Remarkably, PPFOT-IDS surpassed the centralized methods IADA (85.1\%) and WDFT-DA (86.9\%) by 7.0 and 5.2 percentages, respectively, despite operating under strict privacy constraints. This counter-intuitive result arises because federated optimal transport benefits from diverse attack patterns across multiple clouds, whereas centralized methods are limited to single-source adaptation. 
+
+\subsection{Privacy-Utility Trade-off Analysis}
+
+Fig.~\ref{fig:privacy_utility} examines the detection precision as the privacy budget $\epsilon$ varies from 0.1 (strong privacy) to 10.0 (weak privacy). For this analysis, we fix per-round $\delta_0 = 10^{-5}$ and vary $\epsilon$; for $\epsilon = 0.85$, the global guarantee after $T = 50$ rounds is $\delta_{total} = 5 \times 10^{-4}$.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.48\textwidth]{fig2_privacy_utility.pdf}
+\caption{Privacy-utility trade-off showing detection accuracy versus privacy budget $\epsilon$ for PPFOT-IDS, Private FedAvg, and DVACNN-Fed on Scenario 3 (Multi$\to$Container). Horizontal dashed line shows FedAvg baseline without explicit privacy. PPFOT-IDS maintains $> 90$\% accuracy for $\epsilon \geq 0.5$, outperforming baselines across all privacy regimes.}
+\label{fig:privacy_utility}
+\end{figure}
+
+Key findings:
+
+\textit{Operating Point Selection.} At $\epsilon = 0.85$, PPFOT-IDS achieves 94.2\% versus 82.3\% for Private FedAvg and 83.1\% for DVACNN-Fed, demonstrating 11.9--12.1 point advantage of DP in marginals versus gradients.
+
+\textit{Strong Privacy Regime.} At $\epsilon = 0.1$, PPFOT-IDS maintains 85.7\% accuracy, substantially exceeding Private FedAvg (68.9\%) and DVACNN-Fed (71.2\%), indicating OT alignment provides robustness to privacy noise lacking in gradient-based methods.
+
+\textit{Weak Privacy Convergence.} As $\epsilon \to 10$, all methods converge toward FedAvg (78.3\%), but PPFOT-IDS reaches 96.1\% due to superior domain adaptation, not merely privacy relaxation.
+
+\subsection{Privacy Parameter Sensitivity Analysis}
+\label{sec:sensitivity}
+
+To characterize how privacy parameters influence detection performance, we conduct a systematic sensitivity analysis varying both $\epsilon$ and $\delta$ independently while holding other hyperparameters fixed.
+
+Table~\ref{tab:sensitivity} presents detection accuracy and per-class F1-scores across seven privacy budget values spanning $\epsilon \in \{0.1, 0.3, 0.5, 0.85, 1.0, 2.0, 5.0\}$ with fixed $\delta_0 = 10^{-5}$ on Scenario 3 (Multi$\to$Container). The no-DP baseline achieves 94.8\% accuracy, providing the upper bound for comparison.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{Sensitivity analysis: detection performance across privacy budgets on Scenario 3 (Multi$\to$Container). $\delta_0 = 10^{-5}$ fixed. No-DP baseline: 94.8\% accuracy. The operating point $\epsilon = 0.85$ is marked with~$^\star$.}
+\label{tab:sensitivity}
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Privacy} & \textbf{Accuracy} & \textbf{Macro-F1} & \textbf{Accuracy}  \\
+\textbf{Budget $\epsilon$} & \textbf{(\%)} & \textbf{(\%)} & \textbf{Drop (\%)} \\
+\hline
+0.1 & 85.7 $\pm$ 1.3 & 83.2 $\pm$ 1.5 & 9.1 \\
+0.3 & 89.4 $\pm$ 0.9 & 87.6 $\pm$ 1.1 & 5.4 \\
+0.5 & 91.8 $\pm$ 0.7 & 90.3 $\pm$ 0.8 & 3.0 \\
+$0.85^\star$ & 94.2 $\pm$ 0.4 & 93.1 $\pm$ 0.5 & 0.6 \\
+1.0 & 94.5 $\pm$ 0.4 & 93.4 $\pm$ 0.5 & 0.3 \\
+2.0 & 95.1 $\pm$ 0.3 & 94.2 $\pm$ 0.4 & $-$0.3 \\
+5.0 & 95.6 $\pm$ 0.3 & 94.7 $\pm$ 0.3 & $-$0.8 \\
+\hline
+No DP & 94.8 $\pm$ 0.3 & 93.9 $\pm$ 0.4 & --- \\
+\hline
+\end{tabular}
+\end{table}
+
+Three key observations emerge. First, there is a clear knee point at $\epsilon \approx 0.85$ where the accuracy curve transitions from steep improvement (85.7\% at $\epsilon = 0.1$ to 94.2\% at $\epsilon = 0.85$, representing 8.5 points over a 0.75 unit $\epsilon$ increase) to a plateau (94.2\% at $\epsilon = 0.85$ to 95.6\% at $\epsilon = 5.0$, only 1.4 points over a 4.15 unit increase). Second, privacy noise disproportionately affects minority attack classes: at $\epsilon = 0.1$, DoS/DDoS maintains 91.3\% F1 whereas injection attacks drops to 72.1\%, a gap that narrows to within 2.4 points at $\epsilon = 0.85$~\cite{dpfairness2025}. Third, varying $\delta$ across $\{10^{-3}, 10^{-5}, 10^{-7}\}$ at $\epsilon = 0.85$ reveals minimal sensitivity: accuracy varies by only 0.3 percentage points, confirming that the Gaussian noise magnitude is dominated by $\epsilon$.
+
+\subsection{Byzantine Robustness Evaluation}
+\label{sec:byzantine_results}
+
+Table~\ref{tab:byzantine} evaluates the resilience to Byzantine attacks (threat model M2) with malicious fractions of 0\%, 20\%, and 40\%.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{Byzantine robustness: Detection accuracy (\%) under increasing fractions of malicious participants. Scenario: Multi$\to$Container with global privacy budget $\epsilon = 1.0$, $\delta_{total} = 5 \times 10^{-4}$ (RDP composition, $T = 50$ rounds). Byzantine participants send adversarially crafted transport plans to maximize target error.}
+\label{tab:byzantine}
+\centering
+\begin{tabular}{lcccc}
+\hline
+\textbf{Method} & \textbf{0\%} & \textbf{20\%} & \textbf{40\%} & \textbf{Accuracy} \\
+ & \textbf{Byzantine} & \textbf{Byzantine} & \textbf{Byzantine} & \textbf{Drop} \\
+\hline
+FedAvg & 78.9 & 68.2 & 52.1 & 26.8 points \\
+FedProx & 79.7 & 71.3 & 59.4 & 20.3 points \\
+FedKD-IDS & 82.1 & 79.3 & 74.6 & 7.5 points \\
+PPFOT-IDS & 94.2 & 91.7 & 87.1 & 7.1 points \\
+\hline
+\end{tabular}
+\end{table}
+
+\textit{Minimal Degradation.} PPFOT-IDS exhibits 7.1 point drop from 0\% to 40\% Byzantine participants, matching FedKD-IDS (7.5 points) while achieving 12.5 points higher absolute accuracy at 40\% malicious (87.1\% vs 74.6\%).
+
+\textit{Byzantine Advantage.} At 40\% Byzantine fraction, PPFOT-IDS outperformed FedAvg by 35.0 points (87.1\% vs 52.1\%), demonstrating that transport-plan-based outlier detection provides stronger resilience than gradient-based aggregation.
+
+\textit{Theoretical Validation.} The predicted degradation $O(\sqrt{q/K})$ yields a bound $\approx 0.283$ for $q = 0.4$, $K = 5$. The observed degradation $7.1/94.2 = 0.075$ is well within guarantees.
+
+\subsubsection{Comparison with Established Robust Aggregation Baselines}
+\label{sec:robust_baselines}
+
+Table~\ref{tab:robust_baselines} compares our Wasserstein-space aggregation against established robust FL baselines, all evaluated within the PPFOT-IDS framework with 20\% Byzantine fraction. Only the aggregation rule varies; the rest of the framework remains identical.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Comparison of aggregation rules within PPFOT-IDS under 20\% Byzantine fraction on Scenario 3. All methods use the same OT framework; only the aggregation rule differs.}
+\label{tab:robust_baselines}
+\centering
+\small
+\begin{tabular}{lccc}
+\hline
+\textbf{Aggregation Rule} & \textbf{Acc. (\%)} & \textbf{F1 (\%)} & \textbf{Time (s/round)} \\
+\hline
+Simple averaging (no defense) & 84.3 & 80.1 & 0.8 \\
+Krum~\cite{blanchard2017} & 89.4 & 85.7 & 2.1 \\
+Multi-Krum & 89.8 & 86.1 & 2.4 \\
+Coord. median~\cite{yin2018} & 88.1 & 84.3 & 1.2 \\
+Bulyan~\cite{guerraoui2018} & 90.1 & 86.5 & 3.1 \\
+\textbf{Ours (Wasserstein-space)} & \textbf{91.7} & \textbf{88.3} & 3.4 \\
+\hline
+\end{tabular}
+\end{table}
+
+Wasserstein-space aggregation outperforms Krum by 2.3 points, Bulyan by 1.6 points, and coordinate-wise median by 3.6 points. The advantage stems from exploiting the geometric structure of transport plans: OT-aware outlier detection captures semantic deviations that element-wise gradient methods miss, since adversarial transport plans that induce meaningful misclassification must shift probability mass in geometrically detectable ways. The 3.4\,s per-round overhead is negligible relative to total round duration ($\sim$180\,s).
+
+\subsection{Computational Efficiency Analysis}
+
+Fig.~\ref{fig:efficiency} shows the computational efficiency across the training time, inference latency, and communication cost per round.
+
+\begin{figure*}[!t]
+\centering
+{\includegraphics[width=1.0\textwidth]{P2_IEEE_Access/fig3_efficiency.pdf}}
+\caption{Computational efficiency comparison across three metrics. (a) Training time to convergence (hours). (b) Per-sample inference latency (ms), with horizontal threshold at 100\,ms for real-time requirements. (c) Communication cost per federated round (MB). PPFOT-IDS achieves 15--23$\times$ speedup in training, sub-100\,ms inference latency, and 3.7$\times$ communication reduction versus baselines.}
+\label{fig:efficiency}
+\end{figure*}
+
+\textit{Training Speedup.} PPFOT-IDS converges in 1.8 hours versus 31.5 hours for WDFT-DA (17.5$\times$ faster) and 14.2 hours for Private FedAvg (7.9$\times$ faster). This speedup stems from adaptive Sinkhorn scheduling (Algorithm~\ref{alg:sinkhorn}) reducing OT computation from $O(\epsilon^{-3})$ to $O(\log(1/\epsilon))$ stages, combined with importance sparsification enabling GPU acceleration. For large-scale real-world deployments, the per-round wall-clock time of 68\,s at $K = 5$ is compatible with SOC detection cycles of 1--10 minutes.
+
+\textit{Real-Time Latency.} PPFOT-IDS achieves 2.9\,ms inference latency, well below the 100\,ms threshold (dashed horizontal line in Fig.~\ref{fig:efficiency}b) for real-time intrusion detection. This 4.4$\times$ improvement versus WDFT-DA (12.7\,ms) enables deployment in latency-sensitive security operations centers where delayed detection increases the breach impact.
+
+\textit{Communication Efficiency.} PPFOT-IDS requires only 12.1 MB per federated round versus 156.8 MB for WDFT-DA (12.9$\times$ reduction) and 45.3 MB for FedAvg (3.7$\times$ reduction). This stems from the transmission of low-dimensional marginal histograms ($B = 100$ bins) rather than full model gradients (millions of parameters), reducing the bandwidth requirements for multi-cloud collaboration.
+
+\subsection{Convergence Analysis and Training Dynamics}
+
+Fig.~\ref{fig:convergence} illustrates the convergence behavior of PPFOT-IDS compared with federated baselines across communication rounds, revealing the superior optimization dynamics of the optimal transport-based domain alignment.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.48\textwidth]{fig4_convergence.pdf}
+\caption{Convergence dynamics across communication rounds for Scenario 3 (Multi$\to$Container). PPFOT-IDS achieves faster convergence and substantially higher final accuracy through optimal transport-based domain alignment. FedAvg, FedProx, and FedKD-IDS plateau at lower accuracy due to lack of explicit distribution alignment mechanisms.}
+\label{fig:convergence}
+\end{figure}
+
+\textit{Faster Convergence.} PPFOT-IDS reached 90\% accuracy by round 30, whereas FedAvg required over 100 rounds to reach a plateau at 78.3\%. The faster convergence stems from optimal transport, which provides direct distribution alignment rather than relying solely on gradient-based feature learning.
+
+\textit{Higher Plateau.} PPFOT-IDS plateaus at 94.2\% accuracy versus 78.3\% for FedAvg (15.9 point gap) and 82.1\% for FedKD-IDS (12.1 point gap). This demonstrates that without explicit distribution alignment, federated methods cannot overcome severe domain shift even with extended training.
+
+\textit{Stability.} PPFOT-IDS exhibits stable convergence without oscillations, whereas federated baselines exhibit slight fluctuations owing to heterogeneous local updates. The stability comes from transport plan-based aggregation providing a geometric consensus in the distribution space.
+
+\subsection{Domain Shift Quantification}
+
+To characterize the severity of distribution shifts across clouds, we measure pairwise Wasserstein distances between empirical marginals for different dataset combinations, as shown in Fig.~\ref{fig:domain_shift}.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.48\textwidth]{fig5_domain_shift.pdf}
+\caption{Pairwise Wasserstein distances ($W_2$) between dataset marginal distributions. Higher values indicate more severe distribution shift. Container-GUIDE exhibits the largest shift (3.17), explaining why Scenario 2 is most challenging. IoT DNN-IoT ML shows minimal shift (0.73) as both come from the same data collection environment.}
+\label{fig:domain_shift}
+\end{figure}
+
+\textit{Quantification of challenge severity.} Container-GUIDE exhibits the largest Wasserstein distance (3.17), explaining why transferring from containers to enterprise SOC or vice versa presents the most challenging scenario. In contrast, IoT DNN-IoT ML shows a minimal shift (0.73) as both variants originate from the same Edge-IIoT data collection environment with different feature subsets.
+
+\textit{Correlation with Detection Difficulty.} Cross-referencing with Table~\ref{tab:accuracy}, we observe that higher Wasserstein distances correlate with larger accuracy gaps between PPFOT-IDS and the baselines, confirming that the explicit distribution alignment of the optimal transport becomes increasingly valuable as the domain shift severity increases.
+
+\subsection{Privacy--Utility--Communication Trade-off}
+\label{sec:tradeoff}
+
+Table~\ref{tab:tradeoff} jointly analyzes the three-way trade-off between privacy strength, detection utility, and communication overhead as $\epsilon$ varies.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Joint privacy--utility--communication trade-off. Communication cost per round includes DP noise overhead.}
+\label{tab:tradeoff}
+\centering
+\small
+\begin{tabular}{lcccc}
+\hline
+$\epsilon$ & \textbf{Acc.(\%)} & \textbf{Comm.(MB)} & \textbf{Train(h)} & \textbf{Latency(ms)} \\
+\hline
+0.1 & 85.7 & 12.8 & 2.1 & 3.1 \\
+0.5 & 91.8 & 12.3 & 1.9 & 3.0 \\
+0.85 & 94.2 & 12.1 & 1.8 & 2.9 \\
+2.0 & 95.1 & 12.0 & 1.8 & 2.9 \\
+$\infty$ (no DP) & 95.8 & 11.9 & 1.7 & 2.8 \\
+\hline
+FedAvg (ref.) & 78.3 & 45.3 & 12.5 & 6.8 \\
+\hline
+\end{tabular}
+\end{table}
+
+Communication cost is nearly invariant to $\epsilon$ (12.0--12.8\,MB range) because the dominant cost is histogram transmission, and DP adds only minor noise overhead. This contrasts sharply with gradient-based DP methods (e.g., Private FedAvg) where privacy and communication are tightly coupled via gradient clipping. At $\epsilon = 0.85$, PPFOT-IDS achieves 3.7$\times$ communication reduction versus FedAvg alongside strong privacy.
+
+\subsection{Scalability Analysis}
+\label{sec:scalability}
+
+\subsubsection{Varying Number of Clients $K$}
+
+Table~\ref{tab:scalability_K} evaluates performance as $K$ scales from 3 to 20.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Scalability with number of federated clients $K$ on Scenario 3 with $\epsilon = 0.85$ and 20\% Byzantine fraction.}
+\label{tab:scalability_K}
+\centering
+\begin{tabular}{lcccc}
+\hline
+$K$ & \textbf{Acc.(\%)} & \textbf{Byz. Acc.(\%)} & \textbf{Round(s)} & \textbf{Comm.(MB)} \\
+\hline
+3 & 91.8 & 88.3 & 42 & 8.7 \\
+5 & 94.2 & 91.7 & 68 & 12.1 \\
+10 & 93.9 & 90.8 & 147 & 18.3 \\
+20 & 93.1 & 89.2 & 412 & 31.7 \\
+\hline
+\end{tabular}
+\end{table}
+
+Accuracy peaks at $K = 5$ and degrades mildly at $K = 20$ (1.1-point drop) due to the $O(K^2)$ pairwise distance computation introducing noise in Byzantine detection at larger scales. Per-round wall-clock time scales quadratically from 42\,s at $K = 3$ to 412\,s at $K = 20$. For $K > 20$, hierarchical aggregation or locality-sensitive hashing would be needed to maintain practical round times.
+
+\subsubsection{Non-IID Heterogeneity}
+
+Table~\ref{tab:noniid} varies the Dirichlet concentration $\alpha_{Dir}$, where smaller values indicate more heterogeneous (non-IID) label distributions across clients.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Impact of non-IID degree (Dirichlet $\alpha_{Dir}$) on Scenario 3 with $K = 5$, $\epsilon = 0.85$.}
+\label{tab:noniid}
+\centering
+\begin{tabular}{lcccc}
+\hline
+$\alpha_{Dir}$ & \textbf{PPFOT-IDS} & \textbf{FedAvg} & \textbf{FedProx} & \textbf{Improvement} \\
+\hline
+0.1 (extreme) & 89.7 & 68.4 & 72.1 & +21.3 \\
+0.5 (moderate) & 94.2 & 78.3 & 79.7 & +15.9 \\
+1.0 (mild) & 94.8 & 82.1 & 83.4 & +12.7 \\
+10.0 (near-IID) & 95.3 & 89.2 & 89.8 & +6.1 \\
+\hline
+\end{tabular}
+\end{table}
+
+PPFOT-IDS shows the largest advantage under extreme non-IID conditions ($\alpha_{Dir} = 0.1$): 21.3-point improvement over FedAvg versus only 6.1 points under near-IID conditions. This confirms that OT-based alignment is most valuable precisely when distribution heterogeneity is severe---the exact scenario encountered in real multi-cloud deployments.
+
+\subsection{Ablation Study}
+
+Table~\ref{tab:ablation} shows the contribution of each PPFOT-IDS component through systematic ablations.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{Ablation study: impact of removing individual components on Scenario 3 (Multi$\to$Container) with 20\% Byzantine fraction and $\epsilon = 1.0$. \textbf{Bold}: full PPFOT-IDS performance.}
+\label{tab:ablation}
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Configuration} & \textbf{Accuracy} & \textbf{Training} & \textbf{Byzantine} \\
+ & \textbf{(\%)} & \textbf{Time (h)} & \textbf{Robust} \\
+\hline
+Full PPFOT-IDS & \textbf{91.7} & \textbf{1.8} & \textbf{Yes} \\
+w/o Adaptive Sinkhorn & 91.4 & 38.2 & Yes \\
+w/o Importance Sparsification & 91.5 & 12.4 & Yes \\
+w/o Byzantine Detection & 84.1 & 1.8 & No \\
+w/o Differential Privacy & 92.3 & 1.7 & Yes \\
+w/o Spectral Normalization & 89.2 & 1.9 & Partial \\
+Entropic OT only & 90.1 & 8.7 & No \\
+Federated Learning only & 78.9 & 12.5 & No \\
+\hline
+\end{tabular}
+\end{table}
+
+\textit{Byzantine Detection Critical.} Removing Byzantine detection causes the largest accuracy drop (7.6 points), validating that transport-plan-based outlier detection is essential for adversarial robustness (threat model M2).
+
+\textit{Computational optimizations are essential.} Removing adaptive Sinkhorn scheduling increases training time from 1.8\,h to 38.2\,h (21.2$\times$ slowdown), rendering PPFOT-IDS impractical for operational deployment. Both optimizations maintain accuracy within 0.3 points while dramatically reducing computational cost.
+
+\textit{Privacy-utility is favorable.} Removing differential privacy improves accuracy by only 0.6 points (91.7\% to 92.3\%), indicating minimal privacy-utility trade-off at $\epsilon = 0.85$. This aligns with the utility bound $O(1/\sqrt{n\epsilon}) \approx 0.01$ for large cloud datasets.
+
+\textit{Spectral Normalization for Robustness.} Removing spectral normalization degrades accuracy by 2.5 points and reduces Byzantine robustness from full to partial, confirming that Lipschitz constraints provide dual benefits.
+
+\textit{OT vs FL Gap.} Full PPFOT-IDS (91.7\%) versus Federated Learning only (78.9\%) demonstrates a 12.8 point improvement from optimal transport domain alignment.
+
+\subsection{Zero-Day Attack Detection Case Study}
+
+To evaluate generalization to novel attack types, we hold out two attack categories (SQL injection and command injection) from training and evaluate detection on these held-out categories (Table~\ref{tab:zeroday}).
+
+\begin{table}[!t]
+\small
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.15}
+\caption{Zero-day attack detection on held-out categories. Training excludes SQL injection and command injection; testing evaluates only these categories.}
+\label{tab:zeroday}
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Method} & \textbf{Precision (\%)} & \textbf{Recall (\%)} & \textbf{F1-Score (\%)} \\
+\hline
+FedAvg & 58.3 & 42.1 & 48.8 \\
+FedProx & 61.2 & 45.7 & 52.3 \\
+FedKD-IDS & 64.8 & 51.3 & 57.3 \\
+IADA (centralized) & 71.2 & 63.5 & 67.1 \\
+WDFT-DA (centralized) & 73.5 & 66.8 & 70.0 \\
+PPFOT-IDS & 78.9 & 72.3 & 75.5 \\
+\hline
+\end{tabular}
+\end{table}
+
+\textit{Superior Generalization.} PPFOT-IDS achieves 75.5\% F1-score, exceeding federated baselines by 18.2--26.7 points and centralized methods by 5.5 points. The learned transport maps capture attack semantics that generalize beyond training categories.
+
+\textit{Precision-Recall Balance.} PPFOT-IDS maintains balanced precision (78.9\%) and recall (72.3\%), whereas federated baselines exhibit poor recall (42.1--51.3\%), indicating inability to detect novel attack variants. Balanced performance stems from optimal transport preserving geometric relationships between benign and malicious distributions during domain adaptation.
+
+
+%% ====================================================================
+\section{Discussion}
+\label{sec:discussion}
+%% ====================================================================
+
+\subsection{Key Findings and Implications}
+
+\textit{Substantial Improvements over Federated Baselines.} PPFOT-IDS achieves an 11.1\% point improvement over the best federated baseline (DVACNN-Fed), with an 11.2 point gain in Scenario 1 (container$\to$IoT).
+
+\textit{Privacy-Accuracy Trade-off.} Despite $(\epsilon = 0.85, \delta = 5 \times 10^{-4})$-DP with tight RDP composition, PPFOT-IDS outperforms Private FedAvg by 18.8 points, validating that privatizing marginal distributions incurs minimal utility loss versus privatizing gradients.
+
+\textit{Multi-Source Advantage.} Scenario 3 achieved the highest accuracy (94.2\%), demonstrating a 10.3 point improvement over single-source adaptation through federated multi-cloud collaboration.
+
+\textit{Exceeding Centralized Methods.} PPFOT-IDS surpasses IADA (85.1\%) and WDFT-DA (86.9\%) by 7.0 and 5.2 points despite strict privacy constraints, as federated OT benefits from diverse attack patterns versus single-source centralized adaptation.
+
+\textit{Scalability under Heterogeneity.} OT alignment shows the largest advantage under extreme non-IID conditions (21.3-point improvement at $\alpha_{Dir} = 0.1$), confirming that the framework is most valuable precisely in the challenging conditions encountered in real multi-cloud deployments.
+
+\subsection{Integration with Emerging Security Paradigms}
+
+Zero Trust frameworks~\cite{adanigbo2024} with adaptive trust scoring and micro-segmentation address authentication and authorization, whereas PPFOT-IDS handles detection, creating defense-in-depth. An LLM-enhanced IDS~\cite{agrafiotis2024} provides a complementary two-tier strategy. Graph-based federated learning~\cite{wu2024} could enhance PPFOT-IDS by incorporating temporal dependencies, and certified Federated Graph Learning~\cite{yang2024} could extend transport-plan-based Byzantine detection.
+
+\subsection{Deployment Considerations}
+
+\textit{Communication under large $K$.} At $K = 20$, per-round communication reaches 31.7\,MB (Table~\ref{tab:scalability_K}), still below FedAvg's 45.3\,MB. The $O(K^2)$ pairwise computation for Byzantine detection becomes the bottleneck (412\,s). For $K > 20$, hierarchical two-level aggregation or approximate nearest-neighbor methods would reduce this to $O(K\log K)$.
+
+\textit{Client churn and asynchrony.} Cloud providers may join or leave the federation. PPFOT-IDS handles partial participation by proceeding with available clients when $\geq K_{min}$ respond. Byzantine detection remains valid as long as honest majority holds among participating clients.
+
+\textit{Long-term privacy preservation.} Over extended deployment, the cumulative privacy budget grows per the RDP accountant (Table~\ref{tab:composition}). We recommend periodic re-initialization when $\epsilon$ exceeds a policy threshold.
+
+\textit{Rare event classes.} The sensitivity analysis shows minority classes suffer disproportionately under strong privacy (injection F1 drops to 72.1\% at $\epsilon = 0.1$). For SOC deployments where rare attack detection is critical, operating at $\epsilon \geq 0.5$ is recommended.
+
+\subsection{Limitations and Future Directions}
+
+\textit{Feature space alignment assumption.} PPFOT-IDS assumes common feature spaces. Heterogeneous clouds with incompatible telemetry formats require feature harmonization preprocessing. Partial optimal transport~\cite{nguyen2024} and bi-level unbalanced OT~\cite{chen2025} are promising directions.
+
+\textit{Adaptive Adversaries.} Our Byzantine threat model assumes arbitrary but non-adaptive transport plans. Investigating game-theoretic frameworks for adaptive Byzantine attacks represents important future work. FreqFed~\cite{fereidooni2024} detecting backdoors via DCT analysis could complement our geometric outlier detection.
+
+\textit{Scalability Beyond Twenty Clouds.} The $O(K^2)$ computation limits scalability. Hierarchical aggregation and low-rank factorization~\cite{scetbon2024} are needed for large-scale federations.
+
+\textit{Communication overhead and deployment scalability.} Communication cost is consistently identified as a bottleneck in federated IDS~\cite{feddbn2024}. PPFOT-IDS's histogram-based communication (12.1\,MB) aligns with the federated Wasserstein distance framework~\cite{fedwad2024} showing that OT communication depends on support size rather than raw samples. Quantization can achieve 40--70\% additional savings~\cite{flsurvey2025}.
+
+\textit{Tightening privacy accounting.} R\'{e}nyi DP with shuffle amplification~\cite{chen2024rdp} and the PRV accountant~\cite{gopi2021} could further tighten bounds. The Proactive DP framework~\cite{vandijk2024} could enable a-priori optimization of privacy-utility trade-offs.
+
+
+%% ====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%% ====================================================================
+
+This study introduces PPFOT-IDS, the first comprehensive framework combining differentially private optimal transport with Byzantine-robust federated learning for multi-cloud intrusion detection. Through formal integration of $(\epsilon = 0.85, \delta = 5 \times 10^{-4})$-differential privacy with tight R\'{e}nyi DP composition accounting on marginal distributions, transport-plan-based Byzantine detection benchmarked against established robust aggregation methods (Krum, Multi-Krum, coordinate-wise median, Bulyan) tolerating up to 40\% malicious participants, and Wasserstein distance domain alignment, PPFOT-IDS addresses all three threat models inherent to multi-cloud security.
+
+Extensive evaluation demonstrates 94.2\% cross-cloud detection accuracy, 87.1\% under 40\% Byzantine attacks, 15--23$\times$ training speedup, and sub-100\,ms inference latency. Scalability studies across $K \in \{3, 5, 10, 20\}$ and non-IID degrees confirm robust performance, with OT alignment showing the largest advantage under extreme heterogeneity (21.3-point improvement at $\alpha_{Dir} = 0.1$). The joint privacy--utility--communication analysis confirms that histogram-based marginal transmission achieves strong privacy with nearly invariant communication cost.
+
+The framework's theoretical contributions include: (1) utility-preserving bounds with explicit assumptions showing that private transport plans degrade detection by at most 3.1\%, (2) convergence guarantees under Byzantine attacks that degrade gracefully as $O(\sqrt{q/K})$, and (3) certified adversarial robustness through Lipschitz-constrained transport maps.
+
+Looking forward, PPFOT-IDS establishes optimal transport as a foundational framework for secure multi-cloud collaboration. Future work should investigate heterogeneous feature spaces through partial optimal transport, adaptive Byzantine adversaries, continual learning for evolving attacks, tighter accounting via shuffle amplification, and broader applicability to cross-sector security collaboration.
+
+\section*{Acknowledgments}
+
+The authors thank anonymous reviewers for their constructive feedback. The authors acknowledge the developers of the POT library and PyTorch. This work was supported by a grant for research centers in Artificial Intelligence provided by the Ministry of Economic Development of the Russian Federation under subsidy agreement (identifier 000000C313925P3Q0002). All authors of this Publication are co-first authors. 
+
+\section*{Data and Code Availability}
+
+The implementation code is publicly available on GitHub.\footnote{\url{https://github.com/rogerpanel/CV/blob/fa9fe5fcc7743fe588f3f9fd185009eb748221b1/optimal-transport-models.ipynb}} The ICS3D dataset is available on Kaggle\footnote{\url{https://kaggle.com/datasets/rogernickanaedevha/integrated-cloud-security-3datasets-ics3d}} with DOI 10.34740/kaggle/dsv/12483891 under the CC BY-NC-SA 4.0 license. A production deployment of the PPFOT-IDS detection pipeline is publicly available as RobustIDPS.ai~\cite{robust2026}, currently processing operational network traffic, though certain scalability limitations identified in Section~VII remain under active investigation.
+
+
+%% ====================================================================
+%% REFERENCES
+%% ====================================================================
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{99}
+
+\bibitem{flexera2024} Flexera, ``State of the Cloud Report 2024,'' Flexera Software LLC, Chicago, IL, 2024.
+\bibitem{mothukuri2021} V. Mothukuri, R. M. Parizi, S. Pouriyeh, et al., ``A survey on security and privacy of federated learning,'' \textit{Future Gener. Comput. Syst.}, vol. 115, pp. 619--640, 2021.
+\bibitem{pan2009} S. J. Pan and Q. Yang, ``A survey on transfer learning,'' \textit{IEEE Trans. Knowl. Data Eng.}, vol. 22, no. 10, pp. 1345--1359, 2009.
+\bibitem{csurka2017} G. Csurka, \textit{Domain Adaptation in Computer Vision Applications}. Cham: Springer, 2017.
+\bibitem{mcmahan2017} B. McMahan, E. Moore, D. Ramage, et al., ``Communication-efficient learning of deep networks from decentralized data,'' in \textit{Proc. AISTATS}, 2017, pp. 1273--1282.
+\bibitem{kairouz2021} P. Kairouz et al., ``Advances and open problems in federated learning,'' \textit{Found. Trends Mach. Learn.}, vol. 14, no. 1--2, pp. 1--210, 2021.
+\bibitem{fang2024} M. Fang, Y. Chen, B. Li, et al., ``BALANCE: Byzantine-robust averaging through local similarity in decentralized systems,'' in \textit{Proc. ACM CCS}, 2024, pp. 1523--1538.
+\bibitem{mai2024} V. Mai, Y. Huang, and P. Kairouz, ``RFLPA: A robust federated learning framework with secure aggregation via packed Shamir secret sharing,'' in \textit{Proc. NeurIPS}, 2024, pp. 2841--2856.
+\bibitem{villani2008} C. Villani, \textit{Optimal Transport: Old and New}. Berlin: Springer, 2008.
+\bibitem{peyre2019} G. Peyr\'{e} and M. Cuturi, ``Computational optimal transport,'' \textit{Found. Trends Mach. Learn.}, vol. 11, no. 5--6, pp. 355--607, 2019.
+\bibitem{long2015} M. Long, Y. Cao, J. Wang, and M. I. Jordan, ``Learning transferable features with deep adaptation networks,'' in \textit{Proc. ICML}, 2015, pp. 97--105.
+\bibitem{kassraie2024} P. Kassraie, A. Kratsios, and A. Pooladian, ``Progressive entropic optimal transport solves the cost hyperparameter problem,'' in \textit{Proc. NeurIPS}, 2024, pp. 4127--4143.
+\bibitem{eyring2024} T. Eyring, R. Berman, and M. Nickel, ``Unbalanced neural Monge maps through re-scaling schemes,'' in \textit{Proc. ICLR}, 2024.
+\bibitem{zhang2024} X. Zhang, W. Liu, and D. Chen, ``Progressive partial optimal transport for imbalanced clustering,'' in \textit{Proc. ICLR}, 2024, pp. 1873--1889.
+\bibitem{rasheed2022} A. Rasheed, M. Ahmed, F. Siddiqui, et al., ``Wasserstein distance guided transformer for network intrusion detection,'' \textit{Comput. Secur.}, vol. 115, p. 102610, 2022.
+\bibitem{redko2020} I. Redko, N. Courty, R. Flamary, and D. Tuia, ``Optimal transport for multi-source domain adaptation under target shift,'' in \textit{Proc. AISTATS}, 2020, pp. 849--859.
+\bibitem{alvarez2021} D. Alvarez-Melis and N. Fusi, ``Geometric dataset distances via optimal transport,'' in \textit{Proc. NeurIPS}, 2021.
+\bibitem{kantorovich1942} L. V. Kantorovich, ``On the translocation of masses,'' \textit{Doklady Akademii Nauk SSSR}, vol. 37, pp. 199--201, 1942.
+\bibitem{cuturi2013} M. Cuturi, ``Sinkhorn distances: Lightspeed computation of optimal transport,'' in \textit{Proc. NIPS}, 2013, pp. 2292--2300.
+\bibitem{altschuler2017} J. Altschuler, J. Weed, and P. Rigollet, ``Near-linear time approximation algorithms for optimal transport via Sinkhorn iteration,'' in \textit{Proc. NIPS}, 2017, pp. 1964--1974.
+\bibitem{scetbon2024} M. Scetbon, M. Cuturi, and G. Peyr\'{e}, ``Low-rank optimal transport through factor relaxation with latent coupling,'' in \textit{Proc. NeurIPS}, 2024, pp. 5248--5263.
+\bibitem{dwork2006} C. Dwork, F. McSherry, K. Nissim, and A. Smith, ``Calibrating noise to sensitivity in private data analysis,'' in \textit{Proc. TCC}, 2006, pp. 265--284.
+\bibitem{dwork2014} C. Dwork and A. Roth, ``The algorithmic foundations of differential privacy,'' \textit{Found. Trends Theor. Comput. Sci.}, vol. 9, no. 3--4, pp. 211--407, 2014.
+\bibitem{mironov2017} I. Mironov, ``R\'{e}nyi differential privacy,'' in \textit{Proc. IEEE CSF}, 2017, pp. 263--275.
+\bibitem{balle2020} B. Balle, G. Cherubin, and J. Steinke, ``Hypothesis testing interpretations and Renyi differential privacy,'' in \textit{Proc. AISTATS}, 2020.
+\bibitem{kairouz2015} P. Kairouz, S. Oh, and P. Viswanath, ``The composition theorem for differential privacy,'' in \textit{Proc. ICML}, 2015.
+\bibitem{gopi2021} S. Gopi, Y. T. Lee, and L. Wutschitz, ``Numerical composition of differential privacy,'' in \textit{Proc. NeurIPS}, 2021.
+\bibitem{balle2018} B. Balle and Y. X. Wang, ``Improving the Gaussian mechanism for differential privacy: Analytical calibration and optimal denoising,'' in \textit{Proc. ICML}, 2018, pp. 394--403.
+\bibitem{chen2022} D. Chen, A. Koskela, J. J\"{a}lk\"{o}, et al., ``Differentially private optimal transport: Application to Wasserstein generative modeling,'' in \textit{Proc. NeurIPS}, 2022.
+\bibitem{vandijk2024} N. Van Dijk, M. Pachetti, L. Mu\~{n}oz-Gonz\'{a}lez, et al., ``Proactive DP: A multiple target optimization framework for DP-SGD,'' in \textit{Proc. ICML}, 2024, pp. 12341--12357.
+\bibitem{arjovsky2017} M. Arjovsky, S. Chintala, and L. Bottou, ``Wasserstein generative adversarial networks,'' in \textit{Proc. ICML}, 2017, pp. 214--223.
+\bibitem{fereidooni2024} H. Fereidooni, S. Marchal, M. Miettinen, et al., ``FreqFed: A frequency analysis-based approach for mitigating poisoning attacks in federated learning,'' in \textit{Proc. NDSS}, 2024.
+\bibitem{nguyen2024} K. Nguyen, N. Ho, and T. Pham, ``Feasible Sinkhorn: Complexity and convergence for partial optimal transport,'' in \textit{Proc. AAAI}, 2024, pp. 9842--9850.
+\bibitem{courty2017} N. Courty, R. Flamary, D. Tuia, and A. Rakotomamonjy, ``Optimal transport for domain adaptation,'' \textit{IEEE Trans. Pattern Anal. Mach. Intell.}, vol. 39, no. 9, pp. 1853--1865, 2017.
+\bibitem{damodaran2018} B. B. Damodaran, B. Kellenberger, R. Flamary, et al., ``DeepJDOT: Deep joint distribution optimal transport for unsupervised domain adaptation,'' in \textit{Proc. ECCV}, 2018, pp. 447--463.
+\bibitem{chen2025} J. Chen, H. Wang, and L. Zhang, ``Bi-level unbalanced optimal transport for partial domain adaptation,'' arXiv preprint arXiv:2501.03421, 2025.
+\bibitem{abadi2016} M. Abadi, A. Chu, I. Goodfellow, et al., ``Deep learning with differential privacy,'' in \textit{Proc. ACM CCS}, 2016, pp. 308--318.
+\bibitem{wang2024nc} Y. Wang, X. Chen, Z. Liu, et al., ``Neural collapse meets differential privacy,'' in \textit{Proc. ICML}, 2024, Oral.
+\bibitem{chen2024rdp} W. Chen, G. Kamath, and S. Vadhan, ``Renyi differential privacy in the shuffle model: Enhanced amplification bounds,'' in \textit{Proc. ICASSP}, 2024, pp. 8421--8425.
+\bibitem{guo2024} C. Guo, Y. Li, and B. Dong, ``Federated learning with differential privacy via fast Fourier transform,'' \textit{Sci. Rep.}, vol. 14, p. 27428, 2024.
+\bibitem{tramer2024} F. Tram\`{e}r, G. Kamath, and N. Carlini, ``Position: Considerations for differentially private learning with large-scale public pretraining,'' in \textit{Proc. ICML}, 2024, Best Paper.
+\bibitem{zhao2022} Y. Zhao, J. Chen, J. Zhang, et al., ``FedKD-IDS: Federated knowledge distillation for intrusion detection systems,'' \textit{IEEE Trans. Depend. Secure Comput.}, Early Access.
+\bibitem{preuveneers2018} D. Preuveneers, V. Rimmer, I. Tsingenopoulos, et al., ``Chained anomaly detection models for federated learning: An intrusion detection case study,'' \textit{Appl. Sci.}, vol. 8, no. 12, p. 2663, 2018.
+\bibitem{wei2025} K. Wei, J. Li, M. Ding, et al., ``Lancelot: Towards efficient and privacy-preserving Byzantine-robust federated learning within fully homomorphic encryption,'' \textit{Nat. Mach. Intell.}, vol. 7, pp. 142--153, 2025.
+\bibitem{wu2024} L. Wu, Y. Zhang, H. Chen, et al., ``Federated learning for network attack detection using attention-based graph neural networks,'' \textit{Sci. Rep.}, vol. 14, p. 17892, 2024.
+\bibitem{yang2024} Y. Yang, B. Hui, H. Yuan, et al., ``Rethinking graph backdoor attacks: A distribution-preserving perspective,'' in \textit{Proc. ACM CCS}, 2024, Distinguished Paper.
+\bibitem{sun2025} Y. Sun, S. K. Lam, and J. Tan, ``PEAR: Personalized encrypted aggregation for robust federated learning,'' \textit{Comput. J.}, vol. 68, no. 2, pp. 341--358, 2025.
+\bibitem{chen2023} Y. Chen, X. Wang, and H. Liu, ``Information-enhanced adversarial domain adaptation for network intrusion detection,'' \textit{IEEE Trans. Inf. Forensics Security}, vol. 18, pp. 1234--1247, 2023.
+\bibitem{miyato2018} T. Miyato, T. Kataoka, M. Koyama, and Y. Yoshida, ``Spectral normalization for generative adversarial networks,'' in \textit{Proc. ICLR}, 2018.
+\bibitem{tsuzuku2018} Y. Tsuzuku, I. Sato, and M. Sugiyama, ``Lipschitz-margin training: Scalable certification of perturbation invariance for deep neural networks,'' in \textit{Proc. NIPS}, 2018, pp. 6541--6550.
+\bibitem{wang2024diff} Y. Wang, T. Pang, C. Du, et al., ``Better diffusion models further improve adversarial training,'' in \textit{Proc. NeurIPS}, 2024, pp. 7823--7841.
+\bibitem{liu2024} H. Liu and B. Lang, ``NIDS-Vis: Towards improving generalized adversarial robustness of unsupervised outlier detection in NIDS,'' \textit{Comput. Secur.}, vol. 138, p. 103645, 2024.
+\bibitem{ahmed2024} M. Ahmed, A. N. Mahmood, and J. Hu, ``A survey of network anomaly detection techniques using deep reinforcement learning,'' \textit{Int. J. Inf. Secur.}, vol. 23, pp. 487--512, 2024.
+\bibitem{adanigbo2024} O. Adanigbo and A. Adekunle, ``Implementing zero trust security in multi-cloud microservices platforms,'' \textit{Int. J. Adv. Multidiscip. Res. Stud.}, vol. 4, no. 3, pp. 127--142, 2024.
+\bibitem{agrafiotis2024} I. Agrafiotis, J. R. C. Nurse, M. Goldsmith, et al., ``LLM-enhanced intrusion detection for containerized applications,'' in \textit{Proc. NSS Symp.}, Springer LNCS, 2024, pp. 89--107.
+\bibitem{li2020} T. Li, A. K. Sahu, M. Zaheer, et al., ``Federated optimization in heterogeneous networks,'' in \textit{Proc. MLSys}, vol. 2, 2020, pp. 429--450.
+\bibitem{anaedevha2024} R. N. Anaedevha, ``ICS3D: Integrated Cloud Security 3Datasets for multi-domain intrusion detection,'' Kaggle, 2024. DOI: 10.34740/kaggle/dsv/12483891
+\bibitem{goldreich2004} O. Goldreich, \textit{Foundations of Cryptography: Volume 2 -- Basic Applications}. Cambridge University Press, 2004.
+\bibitem{lamport1982} L. Lamport, R. Shostak, and M. Pease, ``The Byzantine generals problem,'' \textit{ACM Trans. Program. Lang. Syst.}, vol. 4, no. 3, pp. 382--401, 1982.
+\bibitem{blanchard2017} P. Blanchard, E. M. El Mhamdi, R. Guerraoui, and J. Stainer, ``Machine learning with adversaries: Byzantine tolerant gradient descent,'' in \textit{Proc. NeurIPS}, 2017, pp. 118--128.
+\bibitem{yin2018} D. Yin, Y. Chen, R. Kannan, and P. Bartlett, ``Byzantine-robust distributed learning: Towards optimal statistical rates,'' in \textit{Proc. ICML}, 2018.
+\bibitem{guerraoui2018} R. Guerraoui, S. Rouault, et al., ``The hidden vulnerability of distributed learning in Byzantium,'' in \textit{Proc. ICML}, 2018.
+\bibitem{fang2020local} M. Fang, X. Cao, J. Jia, and N. Gong, ``Local model poisoning attacks to Byzantine-robust federated learning,'' in \textit{Proc. USENIX Security}, 2020.
+\bibitem{li2020noniid} Q. Li, Y. Diao, Q. Chen, and B. He, ``Federated learning on non-IID data silos: An experimental study,'' in \textit{Proc. IEEE ICDE}, 2022.
+\bibitem{nist2025} J. P. Near, D. Darais, N. Lefkovitz, and G. S. Howarth, ``Guidelines for evaluating differential privacy guarantees,'' NIST SP 800-226, 2025.
+\bibitem{dwork2019expose} C. Dwork, N. Kohli, and D. Mulligan, ``Differential privacy in practice: Expose your epsilons!'' \textit{J. Privacy Confidentiality}, vol. 9, no. 2, 2019.
+\bibitem{dpfairness2025} A. Ghalebikesabi, L. Berrada, S. Gowal, et al., ``Differential privacy in federated learning: Mitigating inference attacks with randomized response,'' arXiv:2509.13987, 2025.
+\bibitem{hmfla2025} S. M. T. Nizamudeen, ``A hybrid metaheuristic federated learning approach based attack detection system for multi-cloud environment,'' \textit{J. Cloud Comput.}, vol. 14, no. 1, 2025.
+\bibitem{abusitta2019} A. Abusitta, M. Bellaiche, and M. Dagenais, ``Multi-cloud cooperative intrusion detection system,'' \textit{Ann. Telecommun.}, vol. 74, pp. 575--587, 2019.
+\bibitem{rashid2025} M. M. Rashid and O. M. Yaseen, ``AI-driven cybersecurity measures for hybrid cloud environments,'' \textit{Int. J. Eng. AI Manage.}, 2025.
+\bibitem{feddbn2024} M. Zaydi, H. El Alami, and A. Beni-Hssane, ``FEDDBN-IDS: Federated deep belief network-based wireless network intrusion detection system,'' \textit{EURASIP J. Inf. Secur.}, vol. 2024, no. 1, 2024.
+\bibitem{fedwad2024} A. Rakotomamonjy, M. Nadjahi, and L. Ralaivola, ``Federated Wasserstein distance,'' in \textit{Proc. ICLR}, 2024.
+\bibitem{flsurvey2025} Q. Li, B. He, and D. Song, ``Intrusion detection based on federated learning: A systematic review,'' \textit{ACM Comput. Surv.}, vol. 57, no. 7, 2025.
+\bibitem{sharafaldin2018} I. Sharafaldin, A. H. Lashkari, and A. A. Ghorbani, ``Toward generating a new intrusion detection dataset and intrusion traffic characterization,'' in \textit{Proc. ICISSP}, 2018.
+\bibitem{ring2019} M. Ring, S. Wunderlich, D. Scheuring, D. Landes, and A. Hotho, ``A survey of network-based intrusion detection data sets,'' \textit{Comput. Secur.}, vol. 86, pp. 147--167, 2019.
+\bibitem{nguyen2019diot} T. D. Nguyen et al., ``D\"IoT: A federated self-learning anomaly detection system for IoT,'' in \textit{Proc. IEEE ICDCS}, 2019.
+\bibitem{anaedevha2026stochastic} R.~N.~Anaedevha and A.~G.~Trofimov, ``Stochastic multimodal transformer with uncertainty quantification for robust network intrusion detection,'' in \textit{Proc. Int. Conf. Neuroinformatics}, Springer, 2025, pp.~428--447.
+\bibitem{anaedevha2026mambashield} R.~N.~Anaedevha, A.~G.~Trofimov, and Y.~V.~Borodachev, ``MambaShield: Selective state-space models for poisoning-resilient sequential modelling,'' \textit{Expert Syst. Appl.}, p.~131175, 2026.
+
+\bibitem{anaedevha2026gp} R.~N.~Anaedevha, A.~G.~Trofimov, and Y.~V.~Borodachev, ``Uncertainty-calibrated hierarchical Gaussian processes for intrusion detection with multi-scale temporal modeling,'' \textit{Neurocomputing}, p.~133105, 2026, doi: 10.1016/j.neucom.2026.133105.
+
+\bibitem{robust2026} R.~N.~Anaedevha and A.~G.~Trofimov, ``RobustIDPS.ai: Advanced AI-powered intrusion detection \& prevention system,'' (Version 1.0) \textit{[Computer software]}. Zenodo, 2026. [Online]. Available: \url{https://doi.org/10.5281/zenodo.19129512}
+
+\end{thebibliography}
+
+\vspace{-1.0cm}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{P2_IEEE_Access/author1.jpeg}}]{Roger Nick Anaedevha}
+received the B.Sc. degree in Computer Science from Ambrose Alli University, Nigeria, M.Sc. degrees in Computer Science from the University of Abuja, Nigeria, and in Information Security from the National Research Nuclear University MEPhI, Moscow. He is currently pursuing the Ph.D. degree in Applied Mathematics and Artificial Intelligence at MEPhI under Prof. Trofimov Aleksandr Gennadievich. His research interests include adversarial machine learning, federated learning, privacy-preserving AI, uncertainty quantification, and Quantum Machine Learning. He has authored several first-author publications in IEEE, Springer, and Elsevier venues. His adversarially-robust IDPS work has been deployed in production processing over 2TB of daily traffic. He is a member of IEEE, ACM, and Russian Neural Network Association.
+\end{IEEEbiography}
+
+\vspace{-1.0cm}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{P2_IEEE_Access/author2.jpg}}]{Trofimov Aleksandr Gennadievich}
+has a PhD, the Assistant Professor at the Institute of Cyber Intelligent Systems, National Research Nuclear University, MEPhI. Head of the Laboratory of Neural Networks Technologies (MEPhI), program/organizing committee member of International Conference ``Neuroinformatics'', the research advisor at the Center for Top-level educational programs in the field of AI at the Institute of Cyber Intelligent Systems of MEPhI. His research focuses on intelligent systems, machine learning theory, and security applications.
+\end{IEEEbiography}
+
+\vspace{-1.0cm}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{author3.jpg}}]{Yuri Vladimirovich Borodachev}
+is affiliated with the Artificial Intelligence Research Center at the National Research Nuclear University MEPhI, Moscow, Russia. He is responsible for managing, coordinating and organizing the research work. His research interests include engineering systems based on artificial intelligence, autonomous vehicles, and AI applications in transport.
+\end{IEEEbiography}
+
+\end{document}
